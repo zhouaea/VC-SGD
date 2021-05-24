@@ -22,7 +22,7 @@ def transform(data, label):
         data = data.astype(np.float32) / 255
 
     if cfg['dataset'] == 'pascalvoc':
-        data = mx.image.resize_short_within(data, short=416, max_size=1024, mult_base=1)
+        data = mx.image.imresize(data, 416, 416)
         data = mx.nd.image.to_tensor(data)
         data = mx.nd.image.normalize(data, mean=0, std=1)
         data = data.astype(np.float32)
