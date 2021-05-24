@@ -1,4 +1,5 @@
 import math
+import gluoncv as gcv
 import heapq
 import random
 from collections import deque
@@ -26,6 +27,10 @@ class Neural_Network:
 
     # The loss function
     def loss(self, output, label):
-        loss_object = gluon.loss.SoftmaxCrossEntropyLoss()
+        if cfg['dataset'] == 'pascalvoc':
+            loss_object = gcv.loss.YOLOV3Loss()
+        else:
+            loss_object = gluon.loss.SoftmaxCrossEntropyLoss()
+
         loss = loss_object(output, label)
         return loss

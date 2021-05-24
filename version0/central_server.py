@@ -1,7 +1,10 @@
 from neural_network import Neural_Network
 from vehicle import Vehicle
 from data_partition import data_for_polygon
-from data_partition import val_train_data, val_test_data 
+from data_partition import val_train_data, val_test_data
+from gluoncv import model_zoo
+import gluoncv as gcv
+from gluoncv.utils.metrics.voc_detection import VOCMApMetric
 import numpy as np
 import yaml
 import mxnet as mx
@@ -59,6 +62,8 @@ class Central_Server:
                 self.net.add(gluon.nn.Dense(128, activation='relu'))
                 self.net.add(gluon.nn.Dense(64, activation='relu'))
                 self.net.add(gluon.nn.Dense(10))
+        elif cfg['dataset'] == 'pascalvoc':
+            net = model_zoo.get_model('yolo3_darknet53_voc', pretrained_base=False)
         self.net.initialize(mx.init.Xavier(), ctx=ctx, force_reinit=True)
 
         self.accumulative_gradients = []
@@ -98,8 +103,6 @@ class Simulation:
         self.central_server = central_server
         self.num_epoch = 0
         self.training_data = []
-        self.epoch_loss = mx.metric.CrossEntropy()
-        self.epoch_accuracy = mx.metric.Accuracy()
         # self.training_set = training_set
         self.val_train_data = val_train_data
         self.val_test_data = val_test_data
@@ -107,6 +110,12 @@ class Simulation:
         self.training_label_byclass = []
         self.num_round = num_round
         self.running_time = 0
+        if cfg['dataset'] == 'pascalvoc':
+            self.epoch_loss = gcv.loss.YOLOV3Loss()
+            self.epoch_accuracy = VOCMApMetric()
+        else:
+            self.epoch_loss = mx.metric.CrossEntropy()
+            self.epoch_accuracy = mx.metric.Accuracy()
        
     def add_into_vehicle_dict(self, vehicle):
         self.vehicle_dict[vehicle.attrib['id']] = Vehicle(vehicle.attrib['id'])

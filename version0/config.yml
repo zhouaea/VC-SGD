@@ -2,9 +2,9 @@ comm_range:
   v2rsu: 100            # vehicle to RSU
 
 simulation:
-  ROU_FILE: '../osm_boston_common/osm.passenger.trips.xml'
-  NET_FILE: '../osm_boston_common/osm.net.xml'
-  FCD_FILE: '../osm_boston_common/osm_fcd.xml'
+  ROU_FILE: '../osm_boston_common/osm.passenger.trips.xml' # route data (given a network, what paths can be taken?)
+  NET_FILE: '../osm_boston_common/osm.net.xml' # network data (layout of the road)
+  FCD_FILE: '../osm_boston_common/osm_fcd.xml' # floating car data (location and speed of every car in the network)
   # ROU_FILE: ''
   # NET_FILE: '../MonacoST/most.net.xml'
   # FCD_FILE: '../MonacoST/most_fcd.xml'
@@ -12,9 +12,9 @@ simulation:
   # NET_FILE: '../osm_london/osm.net.xml'
   # FCD_FILE: '../osm_london/london_fcd.xml'
 
-  num_rsu: 5            # number of RSU
-  num_vc: 0 # 0, 2, 4, 6, 8, 10
-  vc_min_vehi: 5
+  num_rsu: 5            # number of RSUs
+  num_vc: 0 # number of stationary vehicular clouds (0, 2, 4, 6, 8, 10)
+  vc_min_vehi: 5 # number of vehicles required to form a vehicular cloud
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
@@ -28,7 +28,7 @@ seed: 99
 
 # ********* frequently changed parameters ***************
 
-dataset: 'mnist' # mnist, cifar10
+dataset: 'pascalvoc' # mnist, cifar10
 num_training_data: 60000 
 num_val_loss: 5000
 
