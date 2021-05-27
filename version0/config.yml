@@ -28,8 +28,8 @@ seed: 99
 
 # ********* frequently changed parameters ***************
 
-dataset: 'pascalvoc' # mnist, cifar10
-num_training_data: 60000 
+dataset: 'pascalvoc' # mnist, cifar10, pascalvoc
+num_training_data: 200 # 60000 for cifar10, 16551 for pascalvoc
 num_val_loss: 5000
 
 aggregation_method: 'simplemean' # simplemean, cgc
