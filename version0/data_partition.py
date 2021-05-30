@@ -142,6 +142,7 @@ else:
     for j in range(len(X_second_half)):
         train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
+# Print statistics on data in each class.
 data_per_class = {}
 for object_class, (data, label) in sorted(train_data_byclass.items()):
     print(object_class, len(data), len(label), end=" | ")
@@ -154,20 +155,23 @@ def data_for_polygon(polygons):
     train_data_bypolygon = []
     train_label_bypolygon = []
     class_index = 0
+
+    random_len = len(X_first_half) // len(polygons) + 1
+
+    # Prepare a second half of data into a list where indices correspond to a class index.
     if cfg['dataset'] == 'pascalvoc':
-        random_len = len(X_first_half) // len(polygons)
+        # Create a list of list of images where each list of images corresponds to a class index. The list index
+        # will correspond to the order in which the keys were added to the dictionary.
+        # Ex 1: For MNIST, train_data_list[0][0] would access the first image (1x28x28 numpy.ndarray) that depicts whichever
+        # key was added first into train_data_byclass.
+        # Ex 2: For pascalvoc, train_data_list[0][0] would access the first image (3x416x416 numpy.ndarray) that depicts
+        # whichever key was added first into train_databyclass.
+        train_data_list = [v for (k, v) in sorted(train_data_byclass.items())]
     else:
-        random_len = len(X_first_half) // len(polygons) + 1
+        train_data_list = list(train_data_byclass.values())
     print('random_len: ', random_len)
 
-    # Create a list of list of images where each list of images corresponds to a class index. The list index
-    # will correspond to the order in which the keys were added to the dictionary.
-    # Ex 1: For MNIST, train_data_list[0][0] would access the first image (1x28x28 numpy.ndarray) that depicts whichever
-    # key was added first into train_data_byclass.
-    # Ex 2: For pascalvoc, train_data_list[0][0] would access the first image (3x416x416 numpy.ndarray) that depicts
-    # whichever key was added first into train_databyclass.
-    # train_data_list = list(train_data_byclass.values())
-    train_data_list = [v for (k,v) in sorted(train_data_byclass.items())]
+
 
     for i in range(len(polygons)):
         # Take a 10th (if there are 10 polygons) of the non-partitioned randomly shuffled data and labels.
@@ -175,40 +179,44 @@ def data_for_polygon(polygons):
         y_ = y_first_half[i*random_len:(i+1)*random_len]
         X_new = copy.deepcopy(X_)
         y_new = copy.deepcopy(y_)
+        if cfg['dataset'] == 'pascalvoc':
+            print('X_ shape:', np.array(X_).shape)
+            print('y_ shape:', np.array(y_).shape)
 
-        print('X_ shape:', np.array(X_).shape)
-        print('y_ shape:', np.array(y_).shape)
+            temp_train_data_byclass = []
+            temp_label_data_byclass = []
 
-        temp_train_data_byclass = []
-        temp_label_data_byclass = []
-
-        # Add images and labels of a single class or multiple classes (if there are more classes than polygons, like in pascal voc)
-        # into temporary lists.
-        for j in range(len(train_data_list) // len(polygons)):
-            temp_train_data_byclass.extend(train_data_list[class_index][0])
-            print('class', i * 2 + j, 'added', np.array(train_data_list[class_index][0]).shape)
-            temp_label_data_byclass.extend(train_data_list[class_index][1])
-            class_index += 1
-
-        # If the number of classes does not divide evenly among polygons, add the images and labels corresponding to the
-        # remaining classes to the last polygon's training and label data.
-        if i == len(polygons) - 1:
-            while class_index < len(train_data_list) - 1:
-                print("extra class protocol triggered:", 'i =', i, "len(polygons) - 1 = ", len(polygons) - 1, 'class_index =', class_index, 'len(train_data) - 1 =', len(train_data_list) - 1)
+            # Add images and labels of a single class or multiple classes (if there are more classes than polygons, like in pascal voc)
+            # into temporary lists.
+            for j in range(len(train_data_list) // len(polygons)):
                 temp_train_data_byclass.extend(train_data_list[class_index][0])
+                print('class', i * 2 + j, 'added', np.array(train_data_list[class_index][0]).shape)
                 temp_label_data_byclass.extend(train_data_list[class_index][1])
                 class_index += 1
 
-        print('class index:', class_index)
+            # If the number of classes does not divide evenly among polygons, add the images and labels corresponding to the
+            # remaining classes to the last polygon's training and label data.
+            if i == len(polygons) - 1:
+                while class_index < len(train_data_list) - 1:
+                    print("extra class protocol triggered:", 'i =', i, "len(polygons) - 1 = ", len(polygons) - 1, 'class_index =', class_index, 'len(train_data) - 1 =', len(train_data_list) - 1)
+                    temp_train_data_byclass.extend(train_data_list[class_index][0])
+                    temp_label_data_byclass.extend(train_data_list[class_index][1])
+                    class_index += 1
 
-        # Add temporary list to a list that corresponds with data in a single polygon.
-        X_new.extend(temp_train_data_byclass)
-        # Add temporary list to a list that corresponds with labels in a single polygon
-        y_new.extend(temp_label_data_byclass)
+            print('class index:', class_index)
 
-        print('X_new shape:', np.array(X_new).shape)
-        print('y_new shape:', np.array(y_new).shape)
-        print()
+            # Add temporary list to a list that corresponds with data in a single polygon.
+            X_new.extend(temp_train_data_byclass)
+            # Add temporary list to a list that corresponds with labels in a single polygon
+            y_new.extend(temp_label_data_byclass)
+
+            print('X_new shape:', np.array(X_new).shape)
+            print('y_new shape:', np.array(y_new).shape)
+            print()
+        else:
+            train_data_list = list(train_data_byclass.values())
+            X_new.extend(train_data_list[i])
+            y_new.extend([list(train_data_byclass.keys())[i] for _ in range(len(train_data_list[i]))])
 
         # Change X_new and y_new into numpy arrays instead of simple lists and have their contents shuffled.
         X_new, y_new = shuffle(np.array(X_new), np.array(y_new))
