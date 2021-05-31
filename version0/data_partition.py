@@ -1,4 +1,5 @@
 import yaml
+import time
 import numpy as np
 import mxnet as mx
 from mxnet import nd, gluon
@@ -24,6 +25,8 @@ def transform(data, label):
 
     return data, label
 
+
+start = time.time()
 # Load Data
 BATCH_SIZE = cfg['neural_network']['batch_size']
 NUM_TRAINING_DATA = cfg['num_training_data']
@@ -142,13 +145,18 @@ else:
     for j in range(len(X_second_half)):
         train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
+end = time.time()
+print('Time to partition half of training data into classes:', end-start)
+
 # Print statistics on data in each class.
-data_per_class = {}
-for object_class, (data, label) in sorted(train_data_byclass.items()):
-    print(object_class, len(data), len(label), end=" | ")
-print("Number of classes: ", len(train_data_byclass.values()))
+if cfg['dataset'] == 'pascalvoc':
+    data_per_class = {}
+    for object_class, (data, label) in sorted(train_data_byclass.items()):
+        print(object_class, len(data), len(label), end=" | ")
+    print("Number of classes: ", len(train_data_byclass.values()))
 
 def data_for_polygon(polygons):
+    start = time.time()
     """
         Returns training data and labels for new epochs.
     """
@@ -169,9 +177,6 @@ def data_for_polygon(polygons):
         train_data_list = [v for (k, v) in sorted(train_data_byclass.items())]
     else:
         train_data_list = list(train_data_byclass.values())
-    print('random_len: ', random_len)
-
-
 
     for i in range(len(polygons)):
         # Take a 10th (if there are 10 polygons) of the non-partitioned randomly shuffled data and labels.
@@ -180,9 +185,6 @@ def data_for_polygon(polygons):
         X_new = copy.deepcopy(X_)
         y_new = copy.deepcopy(y_)
         if cfg['dataset'] == 'pascalvoc':
-            print('X_ shape:', np.array(X_).shape)
-            print('y_ shape:', np.array(y_).shape)
-
             temp_train_data_byclass = []
             temp_label_data_byclass = []
 
@@ -190,7 +192,6 @@ def data_for_polygon(polygons):
             # into temporary lists.
             for j in range(len(train_data_list) // len(polygons)):
                 temp_train_data_byclass.extend(train_data_list[class_index][0])
-                print('class', i * 2 + j, 'added', np.array(train_data_list[class_index][0]).shape)
                 temp_label_data_byclass.extend(train_data_list[class_index][1])
                 class_index += 1
 
@@ -198,21 +199,14 @@ def data_for_polygon(polygons):
             # remaining classes to the last polygon's training and label data.
             if i == len(polygons) - 1:
                 while class_index < len(train_data_list) - 1:
-                    print("extra class protocol triggered:", 'i =', i, "len(polygons) - 1 = ", len(polygons) - 1, 'class_index =', class_index, 'len(train_data) - 1 =', len(train_data_list) - 1)
                     temp_train_data_byclass.extend(train_data_list[class_index][0])
                     temp_label_data_byclass.extend(train_data_list[class_index][1])
                     class_index += 1
-
-            print('class index:', class_index)
 
             # Add temporary list to a list that corresponds with data in a single polygon.
             X_new.extend(temp_train_data_byclass)
             # Add temporary list to a list that corresponds with labels in a single polygon
             y_new.extend(temp_label_data_byclass)
-
-            print('X_new shape:', np.array(X_new).shape)
-            print('y_new shape:', np.array(y_new).shape)
-            print()
         else:
             train_data_list = list(train_data_byclass.values())
             X_new.extend(train_data_list[i])
@@ -225,6 +219,6 @@ def data_for_polygon(polygons):
         train_data_bypolygon.append(X_new.tolist())
         train_label_bypolygon.append(y_new.tolist())
 
-    print('train_data_bypolygon shape:', np.array(train_data_bypolygon, dtype=object).shape)
-    print('train_label_bypolygon shape:', np.array(train_label_bypolygon, dtype=object).shape)
+    end = time.time()
+    print('Time to partition all training data into polygons:', end - start)
     return train_data_bypolygon, train_label_bypolygon
