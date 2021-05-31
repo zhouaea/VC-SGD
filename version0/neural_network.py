@@ -28,7 +28,9 @@ class Neural_Network:
     # The loss function
     def loss(self, output, label):
         if cfg['dataset'] == 'pascalvoc':
-            loss_object = gcv.loss.YOLOV3Loss()
+            # We don't use a standalone loss function for object detection since the yolo network can calculate loss
+            # by itself in recording + training mode.
+            pass
         else:
             loss_object = gluon.loss.SoftmaxCrossEntropyLoss()
 

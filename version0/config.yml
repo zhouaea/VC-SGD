@@ -18,7 +18,7 @@ simulation:
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
-  batch_size: 100
+  batch_size: 25
   epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
@@ -28,8 +28,8 @@ seed: 99
 
 # ********* frequently changed parameters ***************
 
-dataset: 'mnist' # mnist, cifar10, pascalvoc
-num_training_data: 60000 # 60000 for mnist, 16551 for pascalvoc
+dataset: 'pascalvoc' # mnist, cifar10, pascalvoc
+num_training_data: 100 # 60000 for mnist, 16551 for pascalvoc
 num_val_loss: 5000
 
 aggregation_method: 'simplemean' # simplemean, cgc

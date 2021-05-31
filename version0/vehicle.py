@@ -1,4 +1,6 @@
 import math
+import time
+
 from neural_network import Neural_Network
 import random
 import numpy as np
@@ -6,17 +8,19 @@ import yaml
 import heapq
 from sklearn.utils import shuffle
 from shapely.geometry import Point
+from gluoncv.model_zoo.yolo.yolo_target import YOLOV3PrefetchTargetGenerator
 
 import mxnet as mx
 from mxnet import nd, autograd, gluon
-
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
+
 # random.seed(cfg['seed'])
 # np.random.seed(cfg['seed'])
+
 
 class Vehicle:
     """
@@ -31,6 +35,7 @@ class Vehicle:
     - training_label_assigned
     - gradients
     """
+
     def __init__(self, car_id):
         self.car_id = car_id
         self.x = 0
@@ -40,10 +45,15 @@ class Vehicle:
         self.training_data_assigned = {}
         self.training_data = []
         self.training_label = []
-        # self.training_label_assigned = []                     
+        # self.training_label_assigned = []
         self.gradients = None
+        if cfg['dataset'] == 'pascalvoc':
+            self.target_generator = None
+            self.fake_x = None
+            self.anchors = None
+            self.offsets = None
+            self.feat_maps = None
         # self.rsu_assigned = None
-
 
     def set_properties(self, x, y, speed):
         self.x = x
@@ -52,6 +62,12 @@ class Vehicle:
 
     def download_model_from(self, central_server):
         self.net = central_server.net
+        if cfg['dataset'] == 'pascalvoc':
+            self.target_generator = YOLOV3PrefetchTargetGenerator(
+                num_class=len(self.net.classes))
+            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, 416, 416))
+            with autograd.train_mode():
+                _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
 
     def handle_data(self):
         num_polygons = len(self.training_data_assigned)
@@ -67,32 +83,53 @@ class Vehicle:
         self.training_data = []
         self.training_label = []
         for i in range(num_polygons):
-            self.training_data.append(nd.array(combined_data[i*BATCH_SIZE:(i+1)*BATCH_SIZE]))
-            self.training_label.append(nd.array(combined_label[i*BATCH_SIZE:(i+1)*BATCH_SIZE]))
+            self.training_data.append(nd.array(combined_data[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
+            self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
     def compute(self, simulation, closest_rsu):
-        neural_net = Neural_Network()
+        if cfg['dataset'] != 'pascalvoc':
+            neural_net = Neural_Network()
+        start = time.time()
         X = self.training_data.pop()
         y = self.training_label.pop()
-        # print(X)
-        # print(y)
+
         with autograd.record():
-            output = self.net(X)
-            if cfg['attack'] == 'label' and len(closest_rsu.accumulative_gradients) < cfg['num_faulty_grads']:
-                loss = neural_net.loss(output, 9 - y)
+            if cfg['dataset'] == 'pascalvoc':
+                # Passing input with * will calculate the loss instead of the model output.
+                # Acquire all variables required to calculate loss.
+                gt_bboxes = mx.nd.array(y[:, :, :4]).astype(np.float32)
+                gt_ids = mx.nd.array(y[:, :, 4:5])
+
+                objectness, center_targets, scale_targets, weights, class_targets = self.target_generator(
+                    self.fake_x, self.feat_maps, self.anchors, self.offsets,
+                    gt_bboxes, gt_ids, None)
+
+                # Calculate loss by using network in training mode and supplying extra target parameters.
+                with autograd.train_mode():
+                    obj_loss, center_loss, scale_loss, cls_loss = self.net(X, gt_bboxes, objectness,
+                                                                           center_targets, scale_targets,
+                                                                           weights, class_targets)
+                loss = obj_loss + center_loss + scale_loss + cls_loss
             else:
-                loss = neural_net.loss(output, y)
+                output = self.net(X)
+                if cfg['attack'] == 'label' and len(closest_rsu.accumulative_gradients) < cfg['num_faulty_grads']:
+                    loss = neural_net.loss(output, 9 - y)
+                else:
+                    loss = neural_net.loss(output, y)
         loss.backward()
 
         grad_collect = []
         for param in self.net.collect_params().values():
             if param.grad_req != 'null':
                 grad_collect.append(param.grad().copy())
+
         self.gradients = grad_collect
         # print(self.gradients)
         # print(len(self.gradients))
         # for i in range(len(self.gradients)):
         #     print(len(self.gradients[i]))
+        end = time.time()
+        print('time to train on one batch:', end-start)
 
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu
@@ -108,11 +145,9 @@ class Vehicle:
             self.upload(simulation, closest_rsu)
         self.training_data_assigned = {}
 
-
-    
     # Return the RSU that is cloest to the vehicle
     def closest_rsu(self, rsu_list):
-        shortest_distance = 99999999 # placeholder (a random large number)
+        shortest_distance = 99999999  # placeholder (a random large number)
         closest_rsu = None
         for rsu in rsu_list:
             distance = math.sqrt((rsu.rsu_x - self.x) ** 2 + (rsu.rsu_y - self.y) ** 2)
