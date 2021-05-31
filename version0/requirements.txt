@@ -1,0 +1,9 @@
+Shapely==1.7.1
+matplotlib==3.3.4
+gluoncv==0.8.0
+pandas==1.2.4
+mxnet
+scipy
+PyYAML==5.4.1
+ruamel.base==1.0.0
+scikit_learn==0.24.2
