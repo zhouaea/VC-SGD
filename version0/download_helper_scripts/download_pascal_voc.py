@@ -14,10 +14,10 @@ def download_voc(path):
         'http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar']
     makedirs(path)
     for url in _DOWNLOAD_URLS:
-        filename = download(url)
+        filename = download(url, path=path)
         # extract
         with tarfile.open(filename) as tar:
-            tar.extractall()
+            tar.extractall(path=path)
 
 if __name__ == '__main__':
     path = os.path.abspath('../../data/pascalvoc/')
