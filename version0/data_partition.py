@@ -131,13 +131,19 @@ if cfg['dataset'] == 'pascalvoc':
     for j in range(len(X_second_half)):
         # Each pascal voc label is an n x 6 ndarray. There are n objects in each datum and the 5th column
         # has the class index for each object.
+        potential_class_indices = []
         for k in range(len(y_second_half[j])):
             # If there are no more valid objects go to the next image label.
             if y_second_half[j][k][4] == -1:
                 break
-            # Access the key of the dict correlating to a class index, and the corresponding value contains a tuple with two lists.
-            train_data_byclass[y_second_half[j][k][4]][0].append(X_second_half[j])
-            train_data_byclass[y_second_half[j][k][4]][1].append(y_second_half[j])
+            # Store all class indices found in the training data.
+            potential_class_indices.append(y_second_half[j][k][4])
+
+        # Access the key of the dict correlating to a random class index found in the training data.
+        # The corresponding value contains a tuple with two lists.
+        random_class_index = np.random.randint(len(potential_class_indices))
+        train_data_byclass[potential_class_indices[random_class_index]][0].append(X_second_half[j])
+        train_data_byclass[potential_class_indices[random_class_index]][1].append(y_second_half[j])
 else:
     train_data_byclass = defaultdict(list)
     # For every image in the second half of the dataset, add it to a list in the dictionary key that corresponds with
