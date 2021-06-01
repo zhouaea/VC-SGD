@@ -5,7 +5,7 @@ import argparse
 import tarfile
 from gluoncv.utils import download, makedirs
 
-_TARGET_DIR = os.path.abspath('../../data/pascalvoc/')
+_TARGET_DIR = os.path.expanduser(os.environ.get('MXNET_HOME', os.path.join('~', '.mxnet', 'datasets', 'voc')))
 
 
 def parse_args():
@@ -84,7 +84,7 @@ if __name__ == '__main__':
             download_aug(path, overwrite=args.overwrite)
 
     # make symlink
-    makedirs(os.path.abspath('../../data/pascalvoc/'))
+    makedirs(os.path.expanduser('~/.mxnet/datasets'))
     if os.path.isdir(_TARGET_DIR):
         os.remove(_TARGET_DIR)
     os.symlink(path, _TARGET_DIR)

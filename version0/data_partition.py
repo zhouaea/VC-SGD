@@ -46,14 +46,17 @@ elif cfg['dataset'] == 'mnist':
     val_test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform),
                                 batch_size=BATCH_SIZE, shuffle=False, last_batch='keep')
 elif cfg['dataset'] == 'pascalvoc':
+    # NOTE: add root='../data/pascalvoc' if data is stored in VC-SGD/data/pascalvoc folder
+    # without root='' argument, VOCDetection() assumes data is in ~/.mxnet/datasets/voc
+
     # typically we use 2007+2012 trainval splits for training data
-    train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+    train_dataset = VOCDetection(splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
     print("Length of training dataset: " + str(len(train_dataset)))
-    val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+    val_train_dataset = VOCDetection(splits=[(2007, 'trainval'), (2012, 'trainval')],
                                      transform=transform)
     # and use 2007 test as validation data
-    val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+    val_test_dataset = VOCDetection(splits=[(2007, 'test')], transform=transform)
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
