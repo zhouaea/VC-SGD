@@ -132,11 +132,11 @@ if cfg['dataset'] == 'pascalvoc':
         # Each pascal voc label is an n x 6 ndarray. There are n objects in each datum and the 5th column
         # has the class index for each object.
         potential_class_indices = []
+        # Store all class indices found in the training data.
         for k in range(len(y_second_half[j])):
             # If there are no more valid objects go to the next image label.
             if y_second_half[j][k][4] == -1:
                 break
-            # Store all class indices found in the training data.
             potential_class_indices.append(y_second_half[j][k][4])
 
         # Access the key of the dict correlating to a random class index found in the training data.

@@ -1,11 +1,5 @@
-py_ver=python3.8                   # the version of Python to be downloaded in install_python
-
 sudo apt update
-sudo apt install -y gcc
-sudo apt install -y software-properties-common
-sudo add-apt-repository -y ppa:deadsnakes/ppa
-sudo apt update
-sudo apt install -y ${py_ver}
-python3.8 --version
-
-pip install -r requirements.txt
+sudo apt install python3-pip
+pip3 --version
+sudo pip3 install --upgrade pip
+pip3 install -r requirements.txt
