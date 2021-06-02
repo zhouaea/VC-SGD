@@ -46,11 +46,10 @@ def simulate(simulation):
         # For each time step (sec) in the FCD file 
         for timestep in root:
 
+            # The number of epochs does not necessarily correlate with a full simulation of the FCD file.
             if simulation.num_epoch > cfg['neural_network']['epoch']:
                 break
 
-            # if simulation.num_epoch > cfg['neural_network']['epoch']:
-            #     break
             if float(timestep.attrib['time']) % 200 == 0:
                 print(timestep.attrib['time'])
 
@@ -84,15 +83,17 @@ def simulate(simulation):
                 polygon_index = vehi.in_polygon(simulation.polygons)
                 # If the vehi goes into a new polygon
                 if polygon_index not in vehi.training_data_assigned:
-                    # There is still data in this epoch
-                    # print([len(i) for i in simulation.training_data_byclass])
+                    # There is still data in this epoch. If each polygon has data but less than the batch
+                    # size, discard them.
+                    print([len(i) for i in simulation.training_data_byclass])
                     if any(len(x) >= BATCH_SIZE for x in simulation.training_data_byclass):
-                        # There is still data in this polygon
+                        # There is still enough data in this polygon.
                         if len(simulation.training_data_byclass[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned = simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
                             del simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
                             training_label_assigned = simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
                             del simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
+                            #
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:
                         simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))
