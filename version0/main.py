@@ -93,7 +93,7 @@ def simulate(simulation):
                             del simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
                             training_label_assigned = simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
                             del simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
-                            #
+                            print('polygon_index entered:', polygon_index)
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:
                         simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))
