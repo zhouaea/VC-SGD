@@ -67,7 +67,7 @@ class Central_Server:
                 self.net.add(gluon.nn.Dense(64, activation='relu'))
                 self.net.add(gluon.nn.Dense(10))
         elif cfg['dataset'] == 'pascalvoc':
-            self.net = get_model('yolo3_darknet53_voc', pretrained=False)
+            self.net = get_model('yolo3_mobilenet1.0_voc', pretrained=False)
         self.net.initialize(mx.init.Xavier(), ctx=ctx, force_reinit=True)
 
         self.accumulative_gradients = []

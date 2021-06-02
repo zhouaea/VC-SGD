@@ -22,9 +22,9 @@ neural_network:
   epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
-  # for pascalvoc/yolo training, multiples of 32 work best
-  height: 192 # industry standard is 416 but it takes up too much memory
-  width: 192
+  # for pascalvoc/yolo training, multiples of 32 are needed, however, some multiples of 32 don't work for some reason?
+  height: 320 # industry standard is 416 but it takes up too much memory
+  width: 320
 
 seed: 99
 
