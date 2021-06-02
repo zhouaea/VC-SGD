@@ -113,8 +113,8 @@ class Simulation:
         # self.training_set = training_set
         self.val_train_data = val_train_data
         self.val_test_data = val_test_data
-        self.training_data_byclass = []
-        self.training_label_byclass = []
+        self.training_data_bypolygon = []
+        self.training_label_bypolygon = []
         self.num_round = num_round
         self.running_time = 0
         if cfg['dataset'] == 'pascalvoc':
@@ -247,4 +247,4 @@ class Simulation:
         self.num_epoch += 1
         # for i, (data, label) in enumerate(self.training_set):
         #     self.training_data.append((data, label))
-        self.training_data_byclass, self.training_label_byclass = data_for_polygon(self.polygons)
+        self.training_data_bypolygon, self.training_label_bypolygon = data_for_polygon(self.polygons)

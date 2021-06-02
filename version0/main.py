@@ -85,24 +85,24 @@ def simulate(simulation):
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    if any(len(x) >= BATCH_SIZE for x in simulation.training_data_byclass):
+                    if any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon):
                         # There is still enough data in this polygon.
-                        if len(simulation.training_data_byclass[polygon_index]) >= BATCH_SIZE:
-                            training_data_assigned = simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
-                            del simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
-                            training_label_assigned = simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
-                            del simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
+                        if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
+                            training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+                            del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+                            training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+                            del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
                             print('polygon_index entered:', polygon_index)
-                            print([len(i) for i in simulation.training_data_byclass])
+                            print([len(i) for i in simulation.training_data_bypolygon])
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:
                         simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))
                         simulation.new_epoch()
-                        if len(simulation.training_data_byclass[polygon_index]) >= BATCH_SIZE:
-                            training_data_assigned = simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
-                            del simulation.training_data_byclass[polygon_index][:BATCH_SIZE]
-                            training_label_assigned = simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
-                            del simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
+                        if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
+                            training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+                            del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+                            training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+                            del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                 
                 closest_rsu = vehi.closest_rsu(rsu_list)
