@@ -85,7 +85,6 @@ def simulate(simulation):
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    print([len(i) for i in simulation.training_data_byclass])
                     if any(len(x) >= BATCH_SIZE for x in simulation.training_data_byclass):
                         # There is still enough data in this polygon.
                         if len(simulation.training_data_byclass[polygon_index]) >= BATCH_SIZE:
@@ -94,6 +93,7 @@ def simulate(simulation):
                             training_label_assigned = simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
                             del simulation.training_label_byclass[polygon_index][:BATCH_SIZE]
                             print('polygon_index entered:', polygon_index)
+                            print([len(i) for i in simulation.training_data_byclass])
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:
                         simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))

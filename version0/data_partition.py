@@ -18,7 +18,7 @@ cfg = yaml.load(file, Loader=yaml.FullLoader)
 
 def transform(data, label):
     if cfg['dataset'] == 'pascalvoc':
-        data = mx.image.imresize(data, 416, 416)
+        data = mx.image.imresize(data, cfg['neural_network']['height'], cfg['neural_network']['width'])
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
         data = mx.nd.transpose(data, (2,0,1))
     data = data.astype(np.float32) / 255

@@ -62,10 +62,11 @@ class Vehicle:
 
     def download_model_from(self, central_server):
         self.net = central_server.net
+        # Calculate targets using the new model. This is required to calculate object detection loss.
         if cfg['dataset'] == 'pascalvoc':
             self.target_generator = YOLOV3PrefetchTargetGenerator(
                 num_class=len(self.net.classes))
-            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, 416, 416))
+            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
 
