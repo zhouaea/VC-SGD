@@ -160,8 +160,6 @@ class Vehicle:
             # Avoid using intermediary lists to save memory.
             # Iterate through each individual batch
             for training_data, label_data in self.training_data_assigned.values():
-                print(nd.array(training_data).shape)
-                print(nd.array(label_data).shape)
                 self.compute(simulation, closest_rsu, training_data, label_data)
                 self.upload(simulation, closest_rsu)
         else:

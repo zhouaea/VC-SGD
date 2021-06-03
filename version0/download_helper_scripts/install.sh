@@ -19,3 +19,4 @@ pip install -r requirements.txt
 # Install pascalvoc dataset in VC-SGD/data/pascalvoc
 python3.9 download_pascal_voc.py
 rm ../../data/pascalvoc/*.tar
+cd ..
