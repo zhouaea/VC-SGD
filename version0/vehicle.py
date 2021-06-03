@@ -147,7 +147,10 @@ class Vehicle:
             rsu.communicate_with_central_server(simulation.central_server)
 
     def compute_and_upload(self, simulation, closest_rsu):
-        self.handle_data()
+        # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
+        if cfg['dataset'] != 'pascalvoc':
+            # Shuffle the collected data
+            self.handle_data()
         while self.training_data:
             self.compute(simulation, closest_rsu)
             self.upload(simulation, closest_rsu)
