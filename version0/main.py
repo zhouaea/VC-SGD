@@ -37,6 +37,25 @@ BATCH_SIZE = cfg['neural_network']['batch_size']
 psutil.virtual_memory().percent
 psutil.cpu_percent()
 
+def extract_batch_from_polygon(simulation, polygon_index):
+    # For the pascalvoc dataset, automatically batch training data for each vehicle
+    if cfg['dataset'] == 'pascalvoc':
+        training_data_assigned = nd.array(simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE])
+        del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+        training_label_assigned = nd.array(simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE])
+        del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+        # training_data_assigned = nd.stack(nd.array(simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]))
+        # del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+        # training_label_assigned = nd.stack(nd.array(simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]))
+        # del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+    else:
+        training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+        del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
+        training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+        del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+
+    return training_data_assigned, training_label_assigned
+
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
@@ -95,10 +114,8 @@ def simulate(simulation):
                     if any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon):
                         # There is still enough data in this polygon.
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
-                            training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-                            del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-                            training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
-                            del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+                            training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
+                                                                                                         polygon_index)
                             print('polygon_index with data entered:', polygon_index)
                             print([len(i) for i in simulation.training_data_bypolygon])
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
@@ -106,18 +123,17 @@ def simulate(simulation):
                         simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))
                         simulation.new_epoch()
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
-                            training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-                            del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-                            training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
-                            del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+                            training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
+                                                                                                         polygon_index)
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
-                
+
                 closest_rsu = vehi.closest_rsu(rsu_list)
                 if closest_rsu is not None:
                     # Download Model
                     vehi.download_model_from(simulation.central_server)
 
                     vehi.compute_and_upload(simulation, closest_rsu)
+
 
         simulation.running_time += float(timestep.attrib['time'])   
                 

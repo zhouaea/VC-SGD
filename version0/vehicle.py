@@ -69,11 +69,16 @@ class Vehicle:
         self.net = central_server.net
         # Calculate targets using the new model. This is required to calculate object detection loss.
         if cfg['dataset'] == 'pascalvoc':
+            # start = time.time()
             self.target_generator = YOLOV3PrefetchTargetGenerator(
                 num_class=len(self.net.classes))
             self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
+            # print('CPU % after getting target:', psutil.cpu_percent())
+            # print('RAM % after getting target:', psutil.virtual_memory().percent)
+            # end = time.time()
+            # print('time to get target:', end - start)
 
     def handle_data(self):
         num_polygons = len(self.training_data_assigned)
@@ -92,12 +97,17 @@ class Vehicle:
             self.training_data.append(nd.array(combined_data[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
-    def compute(self, simulation, closest_rsu):
+    def compute(self, simulation, closest_rsu, *args):
         if cfg['dataset'] != 'pascalvoc':
             neural_net = Neural_Network()
         start = time.time()
-        X = self.training_data.pop()
-        y = self.training_label.pop()
+
+        if args is None:
+            X = self.training_data.pop()
+            y = self.training_label.pop()
+        else:
+            X = args[0]
+            y = args[1]
 
         with autograd.record():
             if cfg['dataset'] == 'pascalvoc':
@@ -134,8 +144,6 @@ class Vehicle:
         # print(len(self.gradients))
         # for i in range(len(self.gradients)):
         #     print(len(self.gradients[i]))
-        print('CPU % after training on one batch:', psutil.cpu_percent())
-        print('RAM % after training on one batch:', psutil.virtual_memory().percent)
         end = time.time()
         print('time to train on one batch:', end-start)
 
@@ -148,12 +156,21 @@ class Vehicle:
 
     def compute_and_upload(self, simulation, closest_rsu):
         # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
-        if cfg['dataset'] != 'pascalvoc':
+        if cfg['dataset'] == 'pascalvoc':
+            # Avoid using intermediary lists to save memory.
+            # Iterate through each individual batch
+            for training_data, label_data in self.training_data_assigned.values():
+                print(nd.array(training_data).shape)
+                print(nd.array(label_data).shape)
+                self.compute(simulation, closest_rsu, training_data, label_data)
+                self.upload(simulation, closest_rsu)
+        else:
             # Shuffle the collected data
             self.handle_data()
-        while self.training_data:
-            self.compute(simulation, closest_rsu)
-            self.upload(simulation, closest_rsu)
+            while self.training_data.values:
+                self.compute(simulation, closest_rsu)
+                self.upload(simulation, closest_rsu)
+
         self.training_data_assigned = {}
 
     # Return the RSU that is cloest to the vehicle

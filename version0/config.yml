@@ -18,7 +18,7 @@ simulation:
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
-  batch_size: 5
+  batch_size: 1
   epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
