@@ -1,5 +1,7 @@
 import time
 
+import psutil
+
 from neural_network import Neural_Network
 from vehicle import Vehicle
 from data_partition import data_for_polygon
@@ -17,7 +19,9 @@ import os
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
-
+# The first time the psutil functions are called without an interval parameter they return a 0.
+psutil.virtual_memory().percent
+psutil.cpu_percent()
 
 # np.random.seed(cfg['seed'])
 
@@ -69,6 +73,8 @@ class Central_Server:
         elif cfg['dataset'] == 'pascalvoc':
             self.net = get_model('yolo3_mobilenet1.0_voc', pretrained=False)
         self.net.initialize(mx.init.Xavier(), ctx=ctx, force_reinit=True)
+        print('CPU % after loading and initializing ML model:', psutil.cpu_percent())
+        print('RAM % after loading and initializing ML model:', psutil.virtual_memory().percent)
 
         self.accumulative_gradients = []
 
@@ -88,6 +94,8 @@ class Central_Server:
                         param.data() - lr * mean_nd[idx:(idx + param.data().size)].reshape(param.data().shape))
                     idx += param.data().size
             self.accumulative_gradients = []
+            print('CPU % after updating model with collected gradients:', psutil.cpu_percent())
+            print('RAM % after updating model with collected gradients:', psutil.virtual_memory().percent)
 
 
 class Simulation:
@@ -150,6 +158,8 @@ class Simulation:
                 gt_class_indices = label[:, :, 4:5]
                 self.epoch_accuracy.update(pred_bboxes, pred_object_class_indices, pred_object_probabilities, gt_bboxes,
                                            gt_class_indices)
+                print('CPU % after calculating accuracy of model:', psutil.cpu_percent())
+                print('RAM % after calculating accuracy of model:', psutil.virtual_memory().percent)
                 print("accuracy computed: ", self.epoch_accuracy.get())
 
             else:
@@ -183,6 +193,8 @@ class Simulation:
                 self.scale_losses.append(scale_loss.mean().asscalar())
                 self.cls_losses.append(cls_loss.mean().asscalar())
                 self.sum_losses.append(sum_loss.mean().asscalar())
+                print('CPU % after calculating and storing validation loss:', psutil.cpu_percent())
+                print('RAM % after calculating and storing validation loss:', psutil.virtual_memory().percent)
             else:
                 outputs = self.central_server.net(data)
                 self.epoch_loss.update(label, nd.softmax(outputs))
@@ -226,6 +238,8 @@ class Simulation:
             print("Epoch {:03d}: Loss: {:03f}, Accuracy: {:03f}\n".format(self.num_epoch,
                                                                           loss,
                                                                           accu))
+        print('CPU % after recording accuracy and loss:', psutil.cpu_percent())
+        print('RAM % after recording accuracy and loss:', psutil.virtual_memory().percent)
 
     def save_data(self, accu, loss, time, *losses):
         if not os.path.exists('collected_results'):

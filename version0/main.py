@@ -1,3 +1,5 @@
+import psutil
+
 from sumo import SUMO_Dataset
 from central_server import Central_Server, Simulation
 from vehicle import Vehicle
@@ -31,6 +33,9 @@ print(' '.join(sys.argv))
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
+# The first time the psutil functions are called without an interval parameter they return a 0.
+psutil.virtual_memory().percent
+psutil.cpu_percent()
 
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
@@ -52,6 +57,8 @@ def simulate(simulation):
 
             if float(timestep.attrib['time']) % 200 == 0:
                 print(timestep.attrib['time'])
+                print('CPU % after', psutil.cpu_percent())
+                print('RAM % after', psutil.virtual_memory().percent)
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)
@@ -92,7 +99,7 @@ def simulate(simulation):
                             del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
                             training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
                             del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
-                            print('polygon_index entered:', polygon_index)
+                            print('polygon_index with data entered:', polygon_index)
                             print([len(i) for i in simulation.training_data_bypolygon])
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:

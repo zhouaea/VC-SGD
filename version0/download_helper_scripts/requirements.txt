@@ -7,3 +7,4 @@ scipy
 PyYAML==5.4.1
 ruamel.base==1.0.0
 scikit_learn==0.24.2
+psutil

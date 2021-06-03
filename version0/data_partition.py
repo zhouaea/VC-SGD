@@ -1,3 +1,4 @@
+import psutil
 import yaml
 import time
 import numpy as np
@@ -14,6 +15,9 @@ from sklearn.utils import shuffle
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
+# The first time the psutil functions are called without an interval parameter they return a 0.
+psutil.virtual_memory().percent
+psutil.cpu_percent()
 
 
 def transform(data, label):
@@ -58,6 +62,9 @@ elif cfg['dataset'] == 'pascalvoc':
     # and use 2007 test as validation data
     val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
 
+    print('CPU % after loading dataset:', psutil.cpu_percent())
+    print('RAM % after loading dataset:', psutil.virtual_memory().percent)
+
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
 
@@ -70,6 +77,9 @@ elif cfg['dataset'] == 'pascalvoc':
                                 batchify_fn=batchify_fn, last_batch='keep')
     val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
                                batchify_fn=batchify_fn, last_batch='keep')
+
+    print('CPU % after loading dataset:', psutil.cpu_percent())
+    print('RAM % after loading dataset:', psutil.virtual_memory().percent)
 
 # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
 # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still 
@@ -119,6 +129,8 @@ else:
         X_second_half = X[int(len(X)/2):]
         y_second_half = y[int(len(y)/2):]
 
+print('CPU % after partitioning half of data:', psutil.cpu_percent())
+print('RAM % after partitioning half of data:', psutil.virtual_memory().percent)
 print("Length of X:", len(X))
 print("Length of y:", len(y))
 print("length of X_first_half", len(X_first_half))
@@ -155,6 +167,8 @@ else:
         train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
 end = time.time()
+print('CPU % after partitioning half of data into classes:', psutil.cpu_percent())
+print('RAM % after partitioning half of data into classes:', psutil.virtual_memory().percent)
 print('Time to partition half of training data into classes:', end-start)
 
 # Print statistics on data in each class.
@@ -229,5 +243,7 @@ def data_for_polygon(polygons):
         train_label_bypolygon.append(y_new.tolist())
 
     end = time.time()
+    print('CPU % after loading data into polygons:', psutil.cpu_percent())
+    print('RAM % after loading data into polygons:', psutil.virtual_memory().percent)
     print('Time to partition all training data into polygons:', end - start)
     return train_data_bypolygon, train_label_bypolygon

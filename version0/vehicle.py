@@ -1,6 +1,8 @@
 import math
 import time
 
+import psutil
+
 from neural_network import Neural_Network
 import random
 import numpy as np
@@ -16,6 +18,9 @@ from mxnet import nd, autograd, gluon
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
+# The first time the psutil functions are called without an interval parameter they return a 0.
+psutil.virtual_memory().percent
+psutil.cpu_percent()
 
 
 # random.seed(cfg['seed'])
@@ -129,6 +134,8 @@ class Vehicle:
         # print(len(self.gradients))
         # for i in range(len(self.gradients)):
         #     print(len(self.gradients[i]))
+        print('CPU % after training on one batch:', psutil.cpu_percent())
+        print('RAM % after training on one batch:', psutil.virtual_memory().percent)
         end = time.time()
         print('time to train on one batch:', end-start)
 
