@@ -1,4 +1,4 @@
-"""Prepare PASCAL VOC datasets"""
+# NOTE: MAKE SURE TO RUN THIS WITHIN DOWNLOAD_HELPER_SCRIPTS FOLDER
 import os
 import shutil
 import argparse
@@ -25,6 +25,8 @@ def download_voc(path):
 
 if __name__ == '__main__':
     path = os.path.abspath('../../data/pascalvoc/')
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     download_voc(path)
     shutil.move(os.path.join(path, 'VOCdevkit', 'VOC2007'), os.path.join(path, 'VOC2007'))
