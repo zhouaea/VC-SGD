@@ -70,14 +70,14 @@ class Vehicle:
         # Calculate targets using the new model. This is required to calculate object detection loss.
         if cfg['dataset'] == 'pascalvoc':
             # start = time.time()
-            old_ctx = list(self.central_server.net.collect_params().values())[0].list_ctx()
-            self.central_server.net.collect_params().reset_ctx(mx.cpu())
+            old_ctx = list(central_server.net.collect_params().values())[0].list_ctx()
+            central_server.net.collect_params().reset_ctx(mx.cpu())
             self.target_generator = YOLOV3PrefetchTargetGenerator(
                 num_class=len(self.net.classes))
             self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
-            self.central_server.net.collect_params().reset_ctx(old_ctx)
+            central_server.net.collect_params().reset_ctx(old_ctx)
             # print('CPU % after getting target:', psutil.cpu_percent())
             # print('RAM % after getting target:', psutil.virtual_memory().percent)
             # end = time.time()
