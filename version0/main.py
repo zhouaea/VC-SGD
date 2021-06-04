@@ -76,8 +76,8 @@ def simulate(simulation):
 
             if float(timestep.attrib['time']) % 200 == 0:
                 print(timestep.attrib['time'])
-                print('CPU % after', psutil.cpu_percent())
-                print('RAM % after', psutil.virtual_memory().percent)
+                print('CPU %', psutil.cpu_percent())
+                print('RAM %', psutil.virtual_memory().percent)
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)
@@ -116,7 +116,7 @@ def simulate(simulation):
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
-                            print('polygon_index with data entered:', polygon_index)
+                            # print('polygon_index with data entered:', polygon_index)
                             print([len(i) for i in simulation.training_data_bypolygon])
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:

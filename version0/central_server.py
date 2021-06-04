@@ -132,7 +132,7 @@ class Simulation:
             self.target_generator = YOLOV3PrefetchTargetGenerator(
                 num_class=len(self.central_server.net.classes))
             self.epoch_loss = gcv.loss.YOLOV3Loss()
-            self.epoch_accuracy = VOCMApMetric()
+            self.epoch_accuracy = VOCMApMetric(iou_thresh=0.1, class_names=central_server.net.classes)
             self.sum_losses = []
             self.obj_losses = []
             self.center_losses = []
@@ -158,9 +158,6 @@ class Simulation:
                 gt_class_indices = label[:, :, 4:5]
                 self.epoch_accuracy.update(pred_bboxes, pred_object_class_indices, pred_object_probabilities, gt_bboxes,
                                            gt_class_indices)
-                print('CPU % after calculating accuracy of model:', psutil.cpu_percent())
-                print('RAM % after calculating accuracy of model:', psutil.virtual_memory().percent)
-                print("accuracy computed: ", self.epoch_accuracy.get())
 
             else:
                 outputs = self.central_server.net(data)
@@ -193,12 +190,12 @@ class Simulation:
                 self.scale_losses.append(scale_loss.mean().asscalar())
                 self.cls_losses.append(cls_loss.mean().asscalar())
                 self.sum_losses.append(sum_loss.mean().asscalar())
-                print('CPU % after calculating and storing validation loss:', psutil.cpu_percent())
-                print('RAM % after calculating and storing validation loss:', psutil.virtual_memory().percent)
             else:
                 outputs = self.central_server.net(data)
                 self.epoch_loss.update(label, nd.softmax(outputs))
         end = time.time()
+        print('CPU % after calculating loss for 10 validation data:', psutil.cpu_percent())
+        print('RAM % after calculating loss for 10 validation data:', psutil.virtual_memory().percent)
         print('time it takes to calculate loss for 10 validation data', end-start)
 
     def print_accuracy(self, time):
@@ -218,6 +215,8 @@ class Simulation:
 
         # Retrieve acuracy and loss and then save them into a csv.
         _, accu = self.epoch_accuracy.get()
+        print(accu)
+        exit()
 
         if cfg['dataset'] == 'pascalvoc':
             obj_loss = np.array(self.obj_losses).mean()
