@@ -76,8 +76,9 @@ def simulate(simulation):
 
             if float(timestep.attrib['time']) % 200 == 0:
                 print(timestep.attrib['time'])
-                print('CPU %', psutil.cpu_percent())
-                print('RAM %', psutil.virtual_memory().percent)
+                if cfg['print_cpu_and_memory']:
+                    print('CPU %', psutil.cpu_percent())
+                    print('RAM %', psutil.virtual_memory().percent)
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)

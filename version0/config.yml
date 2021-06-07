@@ -27,10 +27,15 @@ neural_network:
   width: 320
 
 seed: 99
-# Disable shuffling and deterministically partition data, intended for pascalvoc dataset.
-analyze_dataset: false
+
+
+# ********* Statistical Analysis Parameters *********
 # Write runtime statistics in csv files.
 write_runtime_statistics: true
+# Print CPU and Memory Usage
+print_cpu_and_memory: false
+# Partition data deterministically and give ids to training data pinpoint faulty data in the pascalvoc dataset.
+analyze_dataset: false
 
 
 

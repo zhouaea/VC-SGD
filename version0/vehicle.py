@@ -80,10 +80,7 @@ class Vehicle:
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
             central_server.net.collect_params().reset_ctx(old_ctx)
-            # print('CPU % after getting target:', psutil.cpu_percent())
-            # print('RAM % after getting target:', psutil.virtual_memory().percent)
-            # end = time.time()
-            # print('time to get target:', end - start)
+
 
     def handle_data(self):
         num_polygons = len(self.training_data_assigned)
@@ -156,6 +153,9 @@ class Vehicle:
         #     print(len(self.gradients[i]))
         end = time.time()
         print('time to train on one batch:', end-start)
+        if cfg['print_cpu_and_memory']:
+            print('CPU % after training on one batch:', psutil.cpu_percent())
+            print('RAM % after training on one batch:', psutil.virtual_memory().percent)
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_train_on_one_batch'), mode='a') as f:

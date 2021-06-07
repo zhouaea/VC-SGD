@@ -18,10 +18,6 @@ from sklearn.utils import shuffle
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
-# The first time the psutil functions are called without an interval parameter they return a 0.
-psutil.virtual_memory().percent
-psutil.cpu_percent()
-
 
 def transform(data, label):
     if cfg['dataset'] == 'pascalvoc':
@@ -95,6 +91,7 @@ elif cfg['dataset'] == 'pascalvoc':
     val_test_data = mx.gluon.data.DataLoader(val_analyze_dataset.take(10), BATCH_SIZE, shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
 
+if cfg['print_cpu_and_memory']:
     print('CPU % after loading dataset:', psutil.cpu_percent())
     print('RAM % after loading dataset:', psutil.virtual_memory().percent)
 
@@ -147,14 +144,9 @@ else:
             X_second_half = X[int(len(X) / 2):]
             y_second_half = y[int(len(y) / 2):]
 
-    print('CPU % after partitioning half of data:', psutil.cpu_percent())
-    print('RAM % after partitioning half of data:', psutil.virtual_memory().percent)
-    print("Length of X:", len(X))
-    print("Length of y:", len(y))
-    print("length of X_first_half", len(X_first_half))
-    print("length of y_first_half", len(y_first_half))
-    print("length of X_second_half", len(X_second_half))
-    print("length of y_second_half", len(y_second_half))
+    if cfg['print_cpu_and_memory']:
+        print('CPU % after partitioning half of data:', psutil.cpu_percent())
+        print('RAM % after partitioning half of data:', psutil.virtual_memory().percent)
 
     # Partition second_half image and label data into different classes.
     if cfg['dataset'] == 'pascalvoc':
@@ -185,8 +177,10 @@ else:
             train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
     end = time.time()
-    print('CPU % after partitioning half of data into classes:', psutil.cpu_percent())
-    print('RAM % after partitioning half of data into classes:', psutil.virtual_memory().percent)
+    if cfg['print_cpu_and_memory']:
+        print('CPU % after partitioning half of data into classes:', psutil.cpu_percent())
+        print('RAM % after partitioning half of data into classes:', psutil.virtual_memory().percent)
+
     print('Time to partition half of training data into classes:', end - start)
 
     # Print statistics on data in each class.
@@ -283,7 +277,8 @@ def data_for_polygon(polygons):
             train_label_bypolygon.append(y_new.tolist())
 
     end = time.time()
-    print('CPU % after loading data into polygons:', psutil.cpu_percent())
-    print('RAM % after loading data into polygons:', psutil.virtual_memory().percent)
+    if cfg['print_cpu_and_memory']:
+        print('CPU % after loading data into polygons:', psutil.cpu_percent())
+        print('RAM % after loading data into polygons:', psutil.virtual_memory().percent)
     print('Time to partition all training data into polygons:', end - start)
     return train_data_bypolygon, train_label_bypolygon
