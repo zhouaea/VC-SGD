@@ -1,4 +1,6 @@
+import csv
 import math
+import os
 import time
 
 import psutil
@@ -154,6 +156,11 @@ class Vehicle:
         #     print(len(self.gradients[i]))
         end = time.time()
         print('time to train on one batch:', end-start)
+
+        if cfg['write_runtime_statistics']:
+            with open(os.path.join('collected_results', 'time_to_train_on_one_batch'), mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([end - start])
 
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu

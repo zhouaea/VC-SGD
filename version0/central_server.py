@@ -150,8 +150,9 @@ class Simulation:
 
     def get_accu_loss(self):
         # accuracy on testing data
-        start = time.time()
+        start_for_all_data = time.time()
         for i, (data, label) in enumerate(self.val_test_data):
+            start = time.time()
             if cfg['dataset'] == 'pascalvoc':
                 outputs = self.central_server.net(data)
                 pred_object_class_indices = outputs[:][0]
@@ -161,16 +162,27 @@ class Simulation:
                 gt_class_indices = label[:, :, 4:5]
                 self.epoch_accuracy.update(pred_bboxes, pred_object_class_indices, pred_object_probabilities, gt_bboxes,
                                            gt_class_indices)
-
             else:
                 outputs = self.central_server.net(data)
                 # this following line takes EXTREMELY LONG to run
                 self.epoch_accuracy.update(label, outputs)
-        end = time.time()
-        print('time to calculate accuracy for 10 test data:', end-start)
-        start = time.time()
+            end = time.time()
+
+            if cfg['write_runtime_statistics']:
+                with open(os.path.join('collected_results', 'time_to_calculate_accuracy_on_one_datum'), mode='a') as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([end - start])
+
+        print('CPU % after calculating accuracy:', psutil.cpu_percent())
+        print('RAM % after calculating accuracy:', psutil.virtual_memory().percent)
+        print('time to calculate accuracy for 10 test data:', end-start_for_all_data)
+
+
+
+        start_for_all_data = time.time()
         # cross entropy on training data
         for i, (data, label) in enumerate(self.val_train_data):
+            start = time.time()
             if cfg['dataset'] == 'pascalvoc':
                 # Acquire all variables required to calculate loss.
                 gt_bboxes = mx.nd.array(label[:, :, :4]).astype(np.float32)
@@ -196,10 +208,15 @@ class Simulation:
             else:
                 outputs = self.central_server.net(data)
                 self.epoch_loss.update(label, nd.softmax(outputs))
-        end = time.time()
+            end = time.time()
+            if cfg['write_runtime_statistics']:
+                with open(os.path.join('collected_results', 'time_to_calculate_loss_on_one_datum'), mode='a') as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([end - start])
+
         print('CPU % after calculating loss for 10 validation data:', psutil.cpu_percent())
         print('RAM % after calculating loss for 10 validation data:', psutil.virtual_memory().percent)
-        print('time it takes to calculate loss for 10 validation data', end-start)
+        print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
 
     def print_accuracy(self, time):
         self.epoch_accuracy.reset()
