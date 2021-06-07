@@ -1,3 +1,5 @@
+import csv
+
 import psutil
 
 from sumo import SUMO_Dataset
@@ -60,6 +62,7 @@ def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
     simulation.new_epoch()
+    data_last_found = None
     
     # Maximum training epochs
     while simulation.num_epoch <= cfg['neural_network']['epoch']:
@@ -117,8 +120,16 @@ def simulate(simulation):
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
-                            # print('polygon_index with data entered:', polygon_index)
+                            data_found = time.time()
                             print([len(i) for i in simulation.training_data_bypolygon])
+                            if cfg['write_runtime_statistics']:
+                                with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
+                                          mode='a') as f:
+                                    if data_last_found is not None:
+                                        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                                        writer.writerow([data_found - data_last_found])
+                            data_last_found = time.time()
+
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:
                         simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))
