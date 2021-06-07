@@ -104,12 +104,17 @@ class Vehicle:
         if cfg['dataset'] != 'pascalvoc':
             neural_net = Neural_Network()
         start = time.time()
-
+        
+        # Extra arguments are for pascalvoc dataset, to prevent intermediary lists from being used to save memory.
         if args is None:
             X = self.training_data.pop()
             y = self.training_label.pop()
         else:
-            X = args[0]
+            if cfg['analyze_dataset']:
+                print('training data number:', args[0])
+                X = args[1][0]
+            else:
+                X = args[0]
             y = args[1]
 
         with autograd.record():

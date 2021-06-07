@@ -229,7 +229,7 @@ class Simulation:
 
             self.save_data(accu, sum_loss, time, obj_loss, center_loss, scale_loss, cls_loss)
             print(
-                "Epoch {:03d}: Loss: {:03f}, Accuracy: {:03f}, Object Loss: {:03f}, Center Loss: {:03f}, Scale Loss: {:03f}, CLS Loss: {:03f}\n".format(
+                "Epoch {:03d}: Loss: {:03f}, Accuracy: {}, Object Loss: {:03f}, Center Loss: {:03f}, Scale Loss: {:03f}, CLS Loss: {:03f}\n".format(
                     self.num_epoch,
                     sum_loss,
                     accu, obj_loss, center_loss, scale_loss, cls_loss))

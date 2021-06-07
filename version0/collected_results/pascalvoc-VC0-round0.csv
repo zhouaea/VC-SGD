@@ -1,2 +1,4 @@
 Epoch number,Time,Accuracy,Loss,Object Loss,Center Loss,Scale Loss,CLS Loss,Aggregation Method,Attack Type
 1,1043.0,"[nan, nan, nan, nan, nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nan, 0.0, 0.015625, nan, 0.0, 0.0, nan, 0.0013020833333333333]",4906.7344,4855.368,6.078494,5.6249957,39.66293,simplemean,noattack
+Epoch number,Time,Accuracy,Loss,Object Loss,Center Loss,Scale Loss,CLS Loss,Aggregation Method,Attack Type
+1,0.0,"[nan, nan, nan, nan, nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0]",4923.1646,4860.378,7.850984,9.133316,45.80255,simplemean,noattack
