@@ -5,10 +5,11 @@ import yaml
 import time
 import numpy as np
 import mxnet as mx
-from mxnet import nd, gluon
+from mxnet.image import imresize as data_resize
 from mxnet.gluon.data.vision import transforms
 from gluoncv.data import transforms as gcv_transforms
 from gluoncv import data, utils
+from gluoncv.data.transforms.bbox import resize as label_bbox_resize
 from gluoncv.data.batchify import Tuple, Stack, Pad
 from gluoncv.data import VOCDetection
 from collections import defaultdict
@@ -24,7 +25,9 @@ psutil.cpu_percent()
 
 def transform(data, label):
     if cfg['dataset'] == 'pascalvoc':
-        data = mx.image.imresize(data, cfg['neural_network']['height'], cfg['neural_network']['width'])
+        h, w, _ = data.shape
+        data = data_resize(data, cfg['neural_network']['height'], cfg['neural_network']['width'])
+        label = label_bbox_resize(label, in_size=(w, h), out_size=(cfg['neural_network']['width'], cfg['neural_network']['height']))
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
         data = mx.nd.transpose(data, (2,0,1))
     data = data.astype(np.float32) / 255

@@ -219,7 +219,6 @@ class Simulation:
         # Retrieve acuracy and loss and then save them into a csv.
         _, accu = self.epoch_accuracy.get()
         print(accu)
-        exit()
 
         if cfg['dataset'] == 'pascalvoc':
             obj_loss = np.array(self.obj_losses).mean()
@@ -242,6 +241,7 @@ class Simulation:
                                                                           accu))
         print('CPU % after recording accuracy and loss:', psutil.cpu_percent())
         print('RAM % after recording accuracy and loss:', psutil.virtual_memory().percent)
+        exit()
 
     def save_data(self, accu, loss, time, *losses):
         if not os.path.exists('collected_results'):
