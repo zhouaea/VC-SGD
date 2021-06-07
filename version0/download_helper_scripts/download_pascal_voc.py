@@ -1,4 +1,6 @@
 # NOTE: MAKE SURE TO RUN THIS WITHIN DOWNLOAD_HELPER_SCRIPTS FOLDER
+# If there is a connection error, simply cd into download_helper_scripts and run this script again.
+# If the script still refuses to run, the host server is probably down. You can verify by googling the website.
 import os
 import shutil
 import argparse
