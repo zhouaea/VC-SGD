@@ -120,6 +120,8 @@ def simulate(simulation):
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
+
+                            # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
                             data_found = time.time()
                             print([len(i) for i in simulation.training_data_bypolygon])
                             if cfg['write_runtime_statistics']:
