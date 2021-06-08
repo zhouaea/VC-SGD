@@ -41,4 +41,4 @@ if cpu_and_memory_writing_enabled is True:
     print(str(np.percentile(cpu_percentages, 50)) + ", " + str(np.average(cpu_percentages)))
 
     print("Median and average in milliseconds for " + 'RAM' + " :")
-    print(str(np.percentile(cpu_percentages, 50)) + ", " + str(np.average(cpu_percentages)))
+    print(str(np.percentile(ram_percentages, 50)) + ", " + str(np.average(ram_percentages)))
