@@ -66,11 +66,13 @@ elif cfg['dataset'] == 'pascalvoc':
     # typically we use 2007+2012 trainval splits for training data
     train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
-    print("Length of training dataset: " + str(len(train_dataset)))
+
     val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                      transform=transform)
+
     # and use 2007 test as validation data
-    val_analyze_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+    val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+
 
     if cfg['write_cpu_and_memory']:
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
@@ -93,7 +95,7 @@ elif cfg['dataset'] == 'pascalvoc':
     print("Batches of training dataloader: " + str(len(train_data)))
     val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
-    val_test_data = mx.gluon.data.DataLoader(val_analyze_dataset.take(10), BATCH_SIZE, shuffle=False,
+    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
 
 if cfg['write_cpu_and_memory']:
