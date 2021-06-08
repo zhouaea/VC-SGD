@@ -1,4 +1,11 @@
 # For installation on a VM with Ubuntu 16.04 and Python 3.5
+# Copy paste this:
+#   git clone https://github.com/zhouaea/VC-SGD.git
+#   cd VC-SGD/
+#   git checkout object_detection
+#   cd version0/download_helper_scripts/
+#   . install.sh
+
 
 # Download Python 3.9
 sudo apt update
