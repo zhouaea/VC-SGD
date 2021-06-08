@@ -213,7 +213,7 @@ def data_for_polygon(polygons):
     if cfg['even_distribution']:
         # Do not organize by classes, just divide entire dataset into tenths.
         for i in range(len(polygons)):
-            one_tenth_index = len(train_data) / 10 + 1
+            one_tenth_index = len(train_data) // 10 + 1
             X_ = X_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             y_ = y_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             X_new = copy.deepcopy(X_)
