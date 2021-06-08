@@ -9,9 +9,11 @@ cpu_and_memory_writing_enabled = cfg['write_cpu_and_memory']
 
 runtimes = []
 
-filenames = ['time_to_train_on_one_batch', 'time_to_calculate_accuracy_on_one_datum', 'time_to_calculate_loss_on_one_datum', 'time_for_vehicle_to_enter_zone_with_data']
+runtime_filenames = ['time_to_train_on_one_batch', 'time_to_calculate_accuracy_on_one_datum', 'time_to_calculate_loss_on_one_datum', 'time_for_vehicle_to_enter_zone_with_data']
+cpu_and_memory_filenames = ['computer_resource_percentages']
+
 if runtime_writing_enabled is True:
-    for filename in filenames:
+    for filename in runtime_filenames:
         # Store the runtime in each line as a float in an array to be calculated on.
         with open(filename) as log:
             line = log.readline()
@@ -19,14 +21,14 @@ if runtime_writing_enabled is True:
                 runtimes.append(float(line))
                 line = log.readline()
 
-    print("Median and average in milliseconds for " + filename + " :")
-    print(str(np.percentile(runtimes, 50)) + ", " + str(np.average(runtimes)))
+        print("Median and average in milliseconds for " + filename + " :")
+        print(str(np.percentile(runtimes, 50)) + ", " + str(np.average(runtimes)))
 
 cpu_percentages = []
 ram_percentages = []
 
-if runtime_writing_enabled is True:
-    for filename in filenames:
+if cpu_and_memory_writing_enabled is True:
+    for filename in cpu_and_memory_filenames:
         # Store the runtime in each line as a float in an array to be calculated on.
         with open(filename) as log:
             line = log.readline()
