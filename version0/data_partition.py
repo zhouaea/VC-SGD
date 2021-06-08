@@ -106,7 +106,8 @@ if cfg['write_cpu_and_memory']:
         writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
 if cfg['analyze_dataset'] or cfg['even_distribution']:
-    X_first_half, y_first_half = train_data[0]
+    for X, y in train_data:
+    X_first_half, y_first_half = X, y
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
