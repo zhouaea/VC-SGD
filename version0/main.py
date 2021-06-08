@@ -84,7 +84,7 @@ def simulate(simulation):
                     with open(os.path.join('collected_results', 'computer_resource_percentages'),
                               mode='a') as f:
                         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+                        writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)

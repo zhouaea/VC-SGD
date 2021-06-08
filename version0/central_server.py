@@ -96,7 +96,7 @@ class Central_Server:
                 with open(os.path.join('collected_results', 'computer_resource_percentages'),
                           mode='a') as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+                    writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
 
 class Simulation:
@@ -177,7 +177,7 @@ class Simulation:
             with open(os.path.join('collected_results', 'computer_resource_percentages'),
                       mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+                writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
         print('time to calculate accuracy for 10 test data:', end-start_for_all_data)
 
 
@@ -221,7 +221,7 @@ class Simulation:
             with open(os.path.join('collected_results', 'computer_resource_percentages'),
                       mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+                writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
         print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
 

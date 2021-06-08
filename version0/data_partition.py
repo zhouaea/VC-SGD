@@ -76,7 +76,7 @@ elif cfg['dataset'] == 'pascalvoc':
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
                   mode='a') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+            writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
@@ -100,7 +100,7 @@ if cfg['write_cpu_and_memory']:
     with open(os.path.join('collected_results', 'computer_resource_percentages'),
               mode='a') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+        writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
 if cfg['analyze_dataset']:
     X_first_half, y_first_half = train_data
@@ -155,7 +155,7 @@ else:
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
                   mode='a') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+            writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
     # Partition second_half image and label data into different classes.
     if cfg['dataset'] == 'pascalvoc':
@@ -190,7 +190,7 @@ else:
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
                   mode='a') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+            writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
     print('Time to partition half of training data into classes:', end - start)
 
@@ -292,6 +292,6 @@ def data_for_polygon(polygons):
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
                   mode='a') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
+            writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
     return train_data_bypolygon, train_label_bypolygon

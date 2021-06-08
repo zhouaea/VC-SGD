@@ -20,10 +20,6 @@ from mxnet import nd, autograd, gluon
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
-# The first time the psutil functions are called without an interval parameter they return a 0.
-psutil.virtual_memory().percent
-psutil.cpu_percent()
-
 
 # random.seed(cfg['seed'])
 # np.random.seed(cfg['seed'])
