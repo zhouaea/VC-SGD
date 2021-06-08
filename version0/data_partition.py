@@ -92,7 +92,7 @@ elif cfg['dataset'] == 'pascalvoc':
         
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA, shuffle=shuffle_train_data,
                                           batchify_fn=batchify_fn, last_batch='discard')
-    print("Batches of training dataloader: " + str(len(train_data)))
+
     val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
     val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
