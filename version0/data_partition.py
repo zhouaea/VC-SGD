@@ -106,8 +106,8 @@ if cfg['write_cpu_and_memory']:
         writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
 
 if cfg['analyze_dataset'] or cfg['even_distribution']:
-    for X, y in train_data:
-        X_first_half, y_first_half = list(X), list(y)
+    for (X, y) in train_data:
+        X_first_half, y_first_half = list(X.asnumpy()), list(y.asnumpy())
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
@@ -209,7 +209,7 @@ def data_for_polygon(polygons):
     if cfg['even_distribution']:
         # Do not organize by classes, just divide entire dataset into tenths.
         for i in range(len(polygons)):
-            one_tenth_index = len(X_first_half) // 10 + 1
+            one_tenth_index = len(X_first_half) // 10
             X_ = X_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             y_ = y_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             X_new = copy.deepcopy(X_)
@@ -242,46 +242,38 @@ def data_for_polygon(polygons):
             train_data_list = list(train_data_byclass.values())
 
         for i in range(len(polygons)):
-            if cfg['analyze_dataset']:
-                X_ = X_first_half[i * random_len:(i + 1) * random_len]
-                y_ = y_first_half[i * random_len:(i + 1) * random_len]
-                # Label each training datum by putting it in a tuple with an index from 0 to 16550.
-                X_ = enumerate(X_)
-                X_new = copy.deepcopy(X_)
-                y_new = copy.deepcopy(y_)
-            else:
-                # Take a 10th (if there are 10 polygons) of the non-partitioned randomly shuffled data and labels.
-                X_ = X_first_half[i * random_len:(i + 1) * random_len]
-                y_ = y_first_half[i * random_len:(i + 1) * random_len]
-                X_new = copy.deepcopy(X_)
-                y_new = copy.deepcopy(y_)
-                if cfg['dataset'] == 'pascalvoc':
-                    temp_train_data_byclass = []
-                    temp_label_data_byclass = []
+            # Take a 10th (if there are 10 polygons) of the non-partitioned randomly shuffled data and labels.
+            X_ = X_first_half[i * random_len:(i + 1) * random_len]
+            y_ = y_first_half[i * random_len:(i + 1) * random_len]
+            X_new = copy.deepcopy(X_)
+            y_new = copy.deepcopy(y_)
+            if cfg['dataset'] == 'pascalvoc':
+                temp_train_data_byclass = []
+                temp_label_data_byclass = []
 
-                    # Add images and labels of a single class or multiple classes (if there are more classes than polygons, like in pascal voc)
-                    # into temporary lists.
-                    for j in range(len(train_data_list) // len(polygons)):
+                # Add images and labels of a single class or multiple classes (if there are more classes than polygons, like in pascal voc)
+                # into temporary lists.
+                for j in range(len(train_data_list) // len(polygons)):
+                    temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
+                    temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
+                    class_index += 1
+
+                # If the number of classes does not divide evenly among polygons, add the images and labels corresponding to the
+                # remaining classes to the last polygon's training and label data.
+                if i == len(polygons) - 1:
+                    while class_index < len(train_data_list) - 1:
                         temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
                         temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
                         class_index += 1
 
-                    # If the number of classes does not divide evenly among polygons, add the images and labels corresponding to the
-                    # remaining classes to the last polygon's training and label data.
-                    if i == len(polygons) - 1:
-                        while class_index < len(train_data_list) - 1:
-                            temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
-                            temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
-                            class_index += 1
-
-                    # Add temporary list to a list that corresponds with data in a single polygon.
-                    X_new.extend(temp_train_data_byclass)
-                    # Add temporary list to a list that corresponds with labels in a single polygon
-                    y_new.extend(temp_label_data_byclass)
-                else:
-                    train_data_list = list(train_data_byclass.values())
-                    X_new.extend(train_data_list[i])
-                    y_new.extend([list(train_data_byclass.keys())[i] for _ in range(len(train_data_list[i]))])
+                # Add temporary list to a list that corresponds with data in a single polygon.
+                X_new.extend(temp_train_data_byclass)
+                # Add temporary list to a list that corresponds with labels in a single polygon
+                y_new.extend(temp_label_data_byclass)
+            else:
+                train_data_list = list(train_data_byclass.values())
+                X_new.extend(train_data_list[i])
+                y_new.extend([list(train_data_byclass.keys())[i] for _ in range(len(train_data_list[i]))])
 
             # For pascalvoc, the contents of the training dataset are shuffled in the dataloader, so the first half of the
             # dataset will be completely random. The second half of the shuffled data will semi-randomly be organized into
