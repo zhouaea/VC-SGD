@@ -153,9 +153,6 @@ class Vehicle:
         #     print(len(self.gradients[i]))
         end = time.time()
         print('time to train on one batch:', end-start)
-        if cfg['print_cpu_and_memory']:
-            print('CPU % after training on one batch:', psutil.cpu_percent())
-            print('RAM % after training on one batch:', psutil.virtual_memory().percent)
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_train_on_one_batch'), mode='a') as f:

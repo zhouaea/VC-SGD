@@ -33,7 +33,7 @@ seed: 99
 # Write runtime statistics in csv files.
 write_runtime_statistics: true
 # Print CPU and Memory Usage
-print_cpu_and_memory: false
+write_cpu_and_memory: true
 # Partition data deterministically and give ids to training data pinpoint faulty data in the pascalvoc dataset.
 analyze_dataset: false
 
@@ -42,7 +42,8 @@ analyze_dataset: false
 # ********* frequently changed parameters ***************
 
 dataset: 'pascalvoc' # mnist, cifar10, pascalvoc
-num_training_data: 150 # 60000 for mnist, 16551 for pascalvoc
+num_training_data: 15
+  0 # 60000 for mnist, 16551 for pascalvoc
 num_val_loss: 5000
 
 aggregation_method: 'simplemean' # simplemean, cgc

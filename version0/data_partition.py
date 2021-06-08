@@ -70,8 +70,11 @@ elif cfg['dataset'] == 'pascalvoc':
     # and use 2007 test as validation data
     val_analyze_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
 
-    print('CPU % after loading dataset:', psutil.cpu_percent())
-    print('RAM % after loading dataset:', psutil.virtual_memory().percent)
+    if cfg['write_cpu_and_memory']:
+        with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                  mode='a') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
@@ -91,9 +94,11 @@ elif cfg['dataset'] == 'pascalvoc':
     val_test_data = mx.gluon.data.DataLoader(val_analyze_dataset.take(10), BATCH_SIZE, shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
 
-if cfg['print_cpu_and_memory']:
-    print('CPU % after loading dataset:', psutil.cpu_percent())
-    print('RAM % after loading dataset:', psutil.virtual_memory().percent)
+if cfg['write_cpu_and_memory']:
+    with open(os.path.join('collected_results', 'computer_resource_percentages'),
+              mode='a') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
 if cfg['analyze_dataset']:
     X_first_half, y_first_half = train_data
@@ -144,9 +149,11 @@ else:
             X_second_half = X[int(len(X) / 2):]
             y_second_half = y[int(len(y) / 2):]
 
-    if cfg['print_cpu_and_memory']:
-        print('CPU % after partitioning half of data:', psutil.cpu_percent())
-        print('RAM % after partitioning half of data:', psutil.virtual_memory().percent)
+    if cfg['write_cpu_and_memory']:
+        with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                  mode='a') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
     # Partition second_half image and label data into different classes.
     if cfg['dataset'] == 'pascalvoc':
@@ -177,9 +184,11 @@ else:
             train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
     end = time.time()
-    if cfg['print_cpu_and_memory']:
-        print('CPU % after partitioning half of data into classes:', psutil.cpu_percent())
-        print('RAM % after partitioning half of data into classes:', psutil.virtual_memory().percent)
+    if cfg['write_cpu_and_memory']:
+        with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                  mode='a') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
     print('Time to partition half of training data into classes:', end - start)
 
@@ -277,8 +286,10 @@ def data_for_polygon(polygons):
             train_label_bypolygon.append(y_new.tolist())
 
     end = time.time()
-    if cfg['print_cpu_and_memory']:
-        print('CPU % after loading data into polygons:', psutil.cpu_percent())
-        print('RAM % after loading data into polygons:', psutil.virtual_memory().percent)
+    if cfg['write_cpu_and_memory']:
+        with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                  mode='a') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
     return train_data_bypolygon, train_label_bypolygon

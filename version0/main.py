@@ -1,4 +1,5 @@
 import csv
+import os
 
 import psutil
 
@@ -79,9 +80,11 @@ def simulate(simulation):
 
             if float(timestep.attrib['time']) % 200 == 0:
                 print(timestep.attrib['time'])
-                if cfg['print_cpu_and_memory']:
-                    print('CPU %', psutil.cpu_percent())
-                    print('RAM %', psutil.virtual_memory().percent)
+                if cfg['write_cpu_and_memory']:
+                    with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                              mode='a') as f:
+                        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                        writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)

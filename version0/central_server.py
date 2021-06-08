@@ -73,9 +73,6 @@ class Central_Server:
         elif cfg['dataset'] == 'pascalvoc':
             self.net = get_model('yolo3_mobilenet1.0_voc', pretrained=False)
         self.net.initialize(mx.init.Xavier(), ctx=ctx, force_reinit=True)
-        if cfg['print_cpu_and_memory']:
-            print('CPU % after loading and initializing ML model:', psutil.cpu_percent())
-            print('RAM % after loading and initializing ML model:', psutil.virtual_memory().percent)
 
         self.accumulative_gradients = []
 
@@ -95,9 +92,11 @@ class Central_Server:
                         param.data() - lr * mean_nd[idx:(idx + param.data().size)].reshape(param.data().shape))
                     idx += param.data().size
             self.accumulative_gradients = []
-            if cfg['print_cpu_and_memory']:
-                print('CPU % after updating model with collected gradients:', psutil.cpu_percent())
-                print('RAM % after updating model with collected gradients:', psutil.virtual_memory().percent)
+            if cfg['write_cpu_and_memory']:
+                with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                          mode='a') as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
 
 class Simulation:
@@ -174,9 +173,11 @@ class Simulation:
                 with open(os.path.join('collected_results', 'time_to_calculate_accuracy_on_one_datum'), mode='a') as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([end - start])
-        if cfg['print_cpu_and_memory']:
-            print('CPU % after calculating accuracy:', psutil.cpu_percent())
-            print('RAM % after calculating accuracy:', psutil.virtual_memory().percent)
+        if cfg['write_cpu_and_memory']:
+            with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                      mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
         print('time to calculate accuracy for 10 test data:', end-start_for_all_data)
 
 
@@ -216,9 +217,11 @@ class Simulation:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([end - start])
 
-        if cfg['print_cpu_and_memory']:
-            print('CPU % after calculating loss for 10 validation data:', psutil.cpu_percent())
-            print('RAM % after calculating loss for 10 validation data:', psutil.virtual_memory().percent)
+        if cfg['write_cpu_and_memory']:
+            with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                      mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([psutil.cpu_percent(0.1), psutil.virtual_memory().percent])
 
         print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
 
@@ -260,10 +263,6 @@ class Simulation:
             print("Epoch {:03d}: Loss: {:03f}, Accuracy: {:03f}\n".format(self.num_epoch,
                                                                           loss,
                                                                           accu))
-        if cfg['print_cpu_and_memory']:
-            print('CPU % after recording accuracy and loss:', psutil.cpu_percent())
-            print('RAM % after recording accuracy and loss:', psutil.virtual_memory().percent)
-        exit()
 
     def save_data(self, accu, loss, time, *losses):
         if not os.path.exists('collected_results'):
