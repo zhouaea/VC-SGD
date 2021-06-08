@@ -107,17 +107,13 @@ if cfg['write_cpu_and_memory']:
 
 if cfg['analyze_dataset'] or cfg['even_distribution']:
     for X, y in train_data:
-    X_first_half, y_first_half = X, y
+        X_first_half, y_first_half = X, y
+
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
     # split the batches into two halves.
     if cfg['dataset'] == 'pascalvoc':
-        X_first_half = []
-        y_first_half = []
-        X_second_half = []
-        y_second_half = []
-
         # # TODO This doesn't really split data into close to equal halves
         # for counter, batch in enumerate(train_data):
         #     X, y = batch
@@ -214,7 +210,7 @@ def data_for_polygon(polygons):
     if cfg['even_distribution']:
         # Do not organize by classes, just divide entire dataset into tenths.
         for i in range(len(polygons)):
-            one_tenth_index = len(train_data) // 10 + 1
+            one_tenth_index = len(X_first_half) // 10 + 1
             X_ = X_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             y_ = y_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             X_new = copy.deepcopy(X_)
