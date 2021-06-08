@@ -107,6 +107,8 @@ if cfg['write_cpu_and_memory']:
 
 if cfg['analyze_dataset']:
     X_first_half, y_first_half = train_data
+elif cfg['even_distribution']:
+    pass
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
@@ -309,4 +311,6 @@ def data_for_polygon(polygons):
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
         print('Time to partition all training data into polygons:', end - start)
+    print(len(train_data_bypolygon))
+    print(len(train_data_bypolygon[0]))
     return train_data_bypolygon, train_label_bypolygon
