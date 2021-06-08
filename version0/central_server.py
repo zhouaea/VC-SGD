@@ -136,7 +136,7 @@ class Simulation:
             self.target_generator = YOLOV3PrefetchTargetGenerator(
                 num_class=len(self.central_server.net.classes))
             self.epoch_loss = gcv.loss.YOLOV3Loss()
-            self.epoch_accuracy = VOCMApMetric(iou_thresh=0.1, class_names=central_server.net.classes)
+            self.epoch_accuracy = VOCMApMetric(iou_thresh=cfg['pascalvoc_metrics']['iou_threshold'], class_names=central_server.net.classes)
             self.sum_losses = []
             self.obj_losses = []
             self.center_losses = []
@@ -275,10 +275,10 @@ class Simulation:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if cfg['dataset'] == 'pascalvoc':
                 if self.num_epoch == 1:
-                    writer.writerow(['Epoch number', 'Time', 'Accuracy', 'Loss', 'Object Loss', 'Center Loss', 'Scale Loss', 'CLS Loss', 'Aggregation Method', 'Attack Type'])
-                writer.writerow([self.num_epoch, time, accu, loss, losses[0], losses[1], losses[2], losses[3], cfg['aggregation_method'], cfg['attack']])
+                    writer.writerow(['Epoch number', 'Time (in hours)', 'Accuracy (By class), IOU Thresh is ' + str(cfg['pascalvoc_metrics']['iou_threshold']), 'Loss', 'Object Loss', 'Center Loss', 'Scale Loss', 'CLS Loss', 'Aggregation Method', 'Attack Type'])
+                writer.writerow([self.num_epoch, time / 360, accu, loss, losses[0], losses[1], losses[2], losses[3], cfg['aggregation_method'], cfg['attack']])
             else:
-                writer.writerow([self.num_epoch, time, accu, loss, cfg['aggregation_method'], cfg['attack']])
+                writer.writerow([self.num_epoch, time / 360, accu, loss, cfg['aggregation_method'], cfg['attack']])
 
     def new_epoch(self):
         self.num_epoch += 1

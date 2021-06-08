@@ -28,6 +28,9 @@ neural_network:
 
 seed: 99
 
+pascalvoc_metrics:
+  iou_threshold: 0.1
+
 
 # ********* Statistical Analysis Parameters *********
 # Write runtime statistics in csv files.

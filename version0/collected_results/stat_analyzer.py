@@ -22,7 +22,7 @@ if runtime_writing_enabled is True:
                 runtimes.append(float(line))
                 line = log.readline()
 
-        print("Median and average in milliseconds for " + filename + " :")
+        print("Median and average runtime in seconds for " + filename + " :")
         print(str(np.percentile(runtimes, 50)) + ", " + str(np.average(runtimes)))
 
 cpu_percentages = []
@@ -37,8 +37,8 @@ if cpu_and_memory_writing_enabled is True:
                 cpu_percentages.append(float(line[0]))
                 ram_percentages.append(float(line[1]))
 
-    print("Median and average in milliseconds for " + 'CPU' + " :")
+    print('Median and average of % of CPU used:')
     print(str(np.percentile(cpu_percentages, 50)) + ", " + str(np.average(cpu_percentages)))
 
-    print("Median and average in milliseconds for " + 'RAM' + " :")
+    print('Median and average % of RAM used (256 GB w/ my VM) :')
     print(str(np.percentile(ram_percentages, 50)) + ", " + str(np.average(ram_percentages)))
