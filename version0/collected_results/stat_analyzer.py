@@ -1,3 +1,4 @@
+import csv
 import numpy as np
 import yaml
 
@@ -31,11 +32,10 @@ if cpu_and_memory_writing_enabled is True:
     for filename in cpu_and_memory_filenames:
         # Store the runtime in each line as a float in an array to be calculated on.
         with open(filename) as log:
-            line = log.readline()
-            while line != '':
+            csv_reader = csv.reader(log, delimiter=',')
+            for line in log:
                 cpu_percentages.append(float(line[0]))
                 ram_percentages.append(float(line[1]))
-                line = log.readline()
 
     print("Median and average in milliseconds for " + 'CPU' + " :")
     print(str(np.percentile(cpu_percentages, 50)) + ", " + str(np.average(cpu_percentages)))
