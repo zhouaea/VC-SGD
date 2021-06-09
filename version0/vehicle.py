@@ -96,6 +96,8 @@ class Vehicle:
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
     def compute(self, simulation, closest_rsu, *args):
+        psutil.cpu_percent()
+
         if cfg['dataset'] != 'pascalvoc':
             neural_net = Neural_Network()
         start = time.time()
@@ -149,6 +151,8 @@ class Vehicle:
         #     print(len(self.gradients[i]))
         end = time.time()
         print('time to train on one batch:', end-start)
+        print('CPU %:', psutil.cpu_percent())
+        print('RAM %:', psutil.virtual_memory().percent())
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_train_on_one_batch'), mode='a') as f:

@@ -112,8 +112,10 @@ def simulate(simulation):
 
             # For each vehicle on the map at the timestep (Training)
             for vehicle in timestep.findall('vehicle'):
-                
-                # Find the polygon the vehi is currently in and assign polygon-specific data to it
+
+                psutil.cpu_percent()
+
+                # Find the polygon the vehi is currently in.
                 polygon_index = vehi.in_polygon(simulation.polygons)
                 # If the vehi goes into a new polygon
                 if polygon_index not in vehi.training_data_assigned:
@@ -128,6 +130,9 @@ def simulate(simulation):
                             # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
                             data_found = time.time()
                             print([len(i) for i in simulation.training_data_bypolygon])
+                            print('CPU %:', psutil.cpu_percent())
+                            print('RAM %:', psutil.virtual_memory().percent())
+
                             if cfg['write_runtime_statistics']:
                                 with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
                                           mode='a') as f:
