@@ -19,10 +19,6 @@ import os
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
-# The first time the psutil functions are called without an interval parameter they return a 0.
-psutil.virtual_memory().percent
-psutil.cpu_percent()
-
 # np.random.seed(cfg['seed'])
 
 class Central_Server:
@@ -79,6 +75,8 @@ class Central_Server:
     # Update the model with its accumulative gradients
     # Used for batch gradient descent
     def update_model(self):
+        if cfg['write_cpu_and_memory']:
+            psutil.cpu_percent()
         if len(self.accumulative_gradients) >= 10:
             param_list = [nd.concat(*[xx.reshape((-1, 1)) for xx in x], dim=0) for x in self.accumulative_gradients]
             mean_nd = nd.mean(nd.concat(*param_list, dim=1), axis=-1)
@@ -96,7 +94,7 @@ class Central_Server:
                 with open(os.path.join('collected_results', 'computer_resource_percentages'),
                           mode='a') as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
+                    writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
 
 
 class Simulation:
@@ -150,6 +148,8 @@ class Simulation:
         self.vehicle_dict[vehicle.attrib['id']] = Vehicle(vehicle.attrib['id'])
 
     def get_accu_loss(self):
+        if cfg['write_cpu_and_memory']:
+            psutil.cpu_percent()
         # accuracy on testing data
         start_for_all_data = time.time()
         for i, (data, label) in enumerate(self.val_test_data):
@@ -173,11 +173,6 @@ class Simulation:
                 with open(os.path.join('collected_results', 'time_to_calculate_accuracy_on_one_datum'), mode='a') as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([end - start])
-        if cfg['write_cpu_and_memory']:
-            with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                      mode='a') as f:
-                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
         print('time to calculate accuracy for 10 test data:', end-start_for_all_data)
 
 
@@ -221,8 +216,7 @@ class Simulation:
             with open(os.path.join('collected_results', 'computer_resource_percentages'),
                       mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
-
+                writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
         print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
 
     def print_accuracy(self, epoch_runtime, virtual_time_step):

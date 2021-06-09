@@ -85,7 +85,7 @@ def simulate(simulation):
                     with open(os.path.join('collected_results', 'computer_resource_percentages'),
                               mode='a') as f:
                         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        writer.writerow([psutil.cpu_percent(1), psutil.virtual_memory().percent])
+                        writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)
@@ -220,7 +220,8 @@ def main():
     #                                 batch_size, shuffle=False, last_batch='keep')
     #     val_test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform),
     #                                 batch_size, shuffle=False, last_batch='keep')
-
+    if cfg['write_cpu_and_memory']:
+        psutil.cpu_percent()
 
     # simulation = Simulation(FCD_FILE, vehicle_dict, rsu_list, vc_list, polygons, central_server, train_data, val_train_data, val_test_data, num_round)
     simulation = Simulation(FCD_FILE, vehicle_dict, rsu_list, vc_list, polygons, central_server, num_round)
