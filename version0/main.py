@@ -64,6 +64,7 @@ def simulate(simulation):
     root = tree.getroot()
     simulation.new_epoch()
     data_last_found = None
+    epoch_runtime_start = time.time()
     
     # Maximum training epochs
     while simulation.num_epoch <= cfg['neural_network']['epoch']:
@@ -137,7 +138,9 @@ def simulate(simulation):
 
                             vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
                     else:
-                        simulation.print_accuracy(simulation.running_time + float(timestep.attrib['time']))
+                        epoch_runtime_end = time.time()
+                        simulation.print_accuracy(epoch_runtime_end - epoch_runtime_start, simulation.running_time + float(timestep.attrib['time']))
+                        epoch_runtime_start = time.time()
                         simulation.new_epoch()
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
@@ -158,6 +161,7 @@ def simulate(simulation):
 
 
 def main():
+    print('initializing simulation...')
     opt = parse_args()
 
     num_gpus = opt.num_gpus

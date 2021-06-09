@@ -225,7 +225,7 @@ class Simulation:
 
         print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
 
-    def print_accuracy(self, time):
+    def print_accuracy(self, epoch_runtime, virtual_time_step):
         self.epoch_accuracy.reset()
         if cfg['dataset'] == 'pascalvoc':
             self.obj_losses = []
@@ -251,20 +251,20 @@ class Simulation:
             cls_loss = np.array(self.cls_losses).mean()
             sum_loss = np.array(self.sum_losses).mean()
 
-            self.save_data(accu, sum_loss, time, obj_loss, center_loss, scale_loss, cls_loss)
+            self.save_data(accu, sum_loss, epoch_runtime, epoch_runtime, virtual_time_step, obj_loss, center_loss, scale_loss, cls_loss)
             print(
-                "Epoch {:03d}: Loss: {:03f}, Accuracy: {}, Object Loss: {:03f}, Center Loss: {:03f}, Scale Loss: {:03f}, CLS Loss: {:03f}\n".format(
+                "Epoch {:03d}: Loss: {:03f}, Accuracy: {}, Epoch Runtime: {}, Virtual Time Step: {}, Object Loss: {:03f}, Center Loss: {:03f}, Scale Loss: {:03f}, CLS Loss: {:03f}\n".format(
                     self.num_epoch,
-                    sum_loss,
-                    accu, obj_loss, center_loss, scale_loss, cls_loss))
+                    sum_loss, accu, epoch_runtime, virtual_time_step,
+                    obj_loss, center_loss, scale_loss, cls_loss))
         else:
             _, loss = self.epoch_loss.get()
-            self.save_data(accu, loss, time)
+            self.save_data(accu, loss, virtual_time_step)
             print("Epoch {:03d}: Loss: {:03f}, Accuracy: {:03f}\n".format(self.num_epoch,
                                                                           loss,
                                                                           accu))
 
-    def save_data(self, accu, loss, time, *losses):
+    def save_data(self, accu, loss, epoch_runtime, virtual_time_step, *losses):
         if not os.path.exists('collected_results'):
             os.makedirs('collected_results')
         dir_name = cfg['dataset'] + '-' + 'VC' + str(cfg['simulation']['num_vc']) + '-' + 'round' + str(
@@ -275,10 +275,10 @@ class Simulation:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if cfg['dataset'] == 'pascalvoc':
                 if self.num_epoch == 1:
-                    writer.writerow(['Epoch number', 'Time (in hours)', 'Accuracy (By class), IOU Thresh is ' + str(cfg['pascalvoc_metrics']['iou_threshold']), 'Loss', 'Object Loss', 'Center Loss', 'Scale Loss', 'CLS Loss', 'Aggregation Method', 'Attack Type'])
-                writer.writerow([self.num_epoch, time / 360, accu, loss, losses[0], losses[1], losses[2], losses[3], cfg['aggregation_method'], cfg['attack']])
+                    writer.writerow(['Epoch number', 'Epoch Runtime', 'Virtual Time Step', 'Accuracy (By class), IOU Thresh is ' + str(cfg['pascalvoc_metrics']['iou_threshold']), 'Loss', 'Object Loss', 'Center Loss', 'Scale Loss', 'CLS Loss', 'Aggregation Method', 'Attack Type'])
+                writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, losses[0], losses[1], losses[2], losses[3], cfg['aggregation_method'], cfg['attack']])
             else:
-                writer.writerow([self.num_epoch, time / 360, accu, loss, cfg['aggregation_method'], cfg['attack']])
+                writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, cfg['aggregation_method'], cfg['attack']])
 
     def new_epoch(self):
         self.num_epoch += 1
