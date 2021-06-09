@@ -18,7 +18,7 @@ simulation:
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
-  batch_size: 50
+  batch_size: 100
   epoch: 10
   # cifar lr = 0.0005
   learning_rate: 0.0005
@@ -36,7 +36,7 @@ pascalvoc_metrics:
 # Write runtime statistics in csv files.
 write_runtime_statistics: true
 # Print CPU and Memory Usage
-write_cpu_and_memory: true
+write_cpu_and_memory: false
 # Partition data deterministically and give ids to training data pinpoint faulty data in the pascalvoc dataset.
 analyze_dataset: false
 # Instead of partitioning by classes, partition so that every zone has equal training data for faster performance.
@@ -45,9 +45,10 @@ even_distribution: true
 
 
 # ********* frequently changed parameters ***************
-
-dataset: 'pascalvoc' # mnist, cifar10, pascalvoc
-num_training_data: 1000 # 60000 for mnist, 16551 for pascalvoc
+# mnist, cifar10, pascalvoc
+dataset: 'pascalvoc'
+# 60000 for mnist, 16551 for pascalvoc
+num_training_data: 1000
 num_val_loss: 5000
 
 aggregation_method: 'simplemean' # simplemean, cgc

@@ -36,9 +36,6 @@ print(' '.join(sys.argv))
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
-# The first time the psutil functions are called without an interval parameter they return a 0.
-psutil.virtual_memory().percent
-psutil.cpu_percent()
 
 def extract_batch_from_polygon(simulation, polygon_index):
     # For the pascalvoc dataset, automatically batch training data for each vehicle
@@ -131,7 +128,6 @@ def simulate(simulation):
                             data_found = time.time()
                             print([len(i) for i in simulation.training_data_bypolygon])
                             print('CPU %:', psutil.cpu_percent())
-                            print('RAM %:', psutil.virtual_memory().percent)
 
                             if cfg['write_runtime_statistics']:
                                 with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
