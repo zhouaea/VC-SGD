@@ -162,6 +162,9 @@ def simulate(simulation):
 
 def main():
     print('initializing simulation...')
+    print('Batch Size:', cfg['neural_network']['batch_size'])
+    print('Training Data:', cfg['num_training_data'])
+
     opt = parse_args()
 
     num_gpus = opt.num_gpus
