@@ -97,7 +97,7 @@ class Vehicle:
 
     def compute(self, simulation, closest_rsu, *args):
         psutil.cpu_percent()
-
+        
         if cfg['dataset'] != 'pascalvoc':
             neural_net = Neural_Network()
         start = time.time()
@@ -152,7 +152,7 @@ class Vehicle:
         end = time.time()
         print('time to train on one batch:', end-start)
         print('CPU %:', psutil.cpu_percent())
-        print('RAM %:', psutil.virtual_memory().percent())
+        print('RAM %:', psutil.virtual_memory().percent)
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_train_on_one_batch'), mode='a') as f:

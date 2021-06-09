@@ -131,7 +131,7 @@ def simulate(simulation):
                             data_found = time.time()
                             print([len(i) for i in simulation.training_data_bypolygon])
                             print('CPU %:', psutil.cpu_percent())
-                            print('RAM %:', psutil.virtual_memory().percent())
+                            print('RAM %:', psutil.virtual_memory().percent)
 
                             if cfg['write_runtime_statistics']:
                                 with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
