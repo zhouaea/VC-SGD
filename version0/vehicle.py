@@ -13,6 +13,7 @@ import heapq
 from sklearn.utils import shuffle
 from shapely.geometry import Point
 from gluoncv.model_zoo.yolo.yolo_target import YOLOV3PrefetchTargetGenerator
+from memory_profiler import profile
 
 import mxnet as mx
 from mxnet import nd, autograd, gluon
@@ -165,6 +166,7 @@ class Vehicle:
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             rsu.communicate_with_central_server(simulation.central_server)
 
+    @profile
     def compute_and_upload(self, simulation, closest_rsu):
         # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
         if cfg['dataset'] == 'pascalvoc':

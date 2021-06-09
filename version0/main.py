@@ -19,6 +19,8 @@ from gluoncv.data import transforms as gcv_transforms
 import numpy as np
 import time, random, argparse, itertools
 import pickle
+from memory_profiler import profile
+
 
 
 def parse_args():
@@ -37,6 +39,7 @@ file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
+@profile
 def extract_batch_from_polygon(simulation, polygon_index):
     # For the pascalvoc dataset, automatically batch training data for each vehicle
     if cfg['dataset'] == 'pascalvoc':
