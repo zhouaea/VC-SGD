@@ -1,4 +1,4 @@
-# For installation on a VM with Ubuntu 16.04 and Python 3.5
+# For installation on a VM with Ubuntu 20.04 and Python 3.5
 # Copy paste this:
 #   git clone https://github.com/zhouaea/VC-SGD.git
 #   cd VC-SGD/
@@ -21,7 +21,7 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3.9 get-pip.py
 
 # Install dependencies
-pip install -r requirements.txt
+python3.9 -m pip install -r requirements.txt
 
 # Install pascalvoc dataset in VC-SGD/data/pascalvoc
 python3.9 download_pascal_voc.py
