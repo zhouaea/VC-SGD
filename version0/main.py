@@ -59,7 +59,7 @@ def extract_batch_from_polygon(simulation, polygon_index):
     return training_data_assigned, training_label_assigned
 
 @profile
-def simulate_cars(simulation, root):
+def simulate_cars(simulation, root, data_last_found, epoch_runtime_start):
     # For each time step (sec) in the FCD file
     for timestep in root:
 
@@ -163,7 +163,7 @@ def simulate(simulation):
         # Clear the vehicle dict after each loop of sumo file
         simulation.vehicle_dict = {}
 
-        simulate_cars(simulation, root)
+        simulate_cars(simulation, root, data_last_found, epoch_runtime_start)
 
     return simulation.central_server.net
 
