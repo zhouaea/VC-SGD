@@ -59,6 +59,97 @@ def extract_batch_from_polygon(simulation, polygon_index):
     return training_data_assigned, training_label_assigned
 
 @profile
+def simulate_cars(simulation, root):
+    # For each time step (sec) in the FCD file
+    for timestep in root:
+
+        # The number of epochs does not necessarily correlate with a full simulation of the FCD file.
+        if simulation.num_epoch > cfg['neural_network']['epoch']:
+            break
+
+        if float(timestep.attrib['time']) % 200 == 0:
+            print(timestep.attrib['time'])
+            if cfg['write_cpu_and_memory']:
+                with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                          mode='a') as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
+
+        vc_vehi_count = [0 for vc in simulation.vc_list]
+        # For each vehicle on the map at the timestep (Find available vehicular clouds)
+        for vehicle in timestep.findall('vehicle'):
+
+            # If vehicle not yet stored in vehicle_dict
+            if vehicle.attrib['id'] not in simulation.vehicle_dict:
+                simulation.add_into_vehicle_dict(vehicle)
+            # Get the vehicle object from vehicle_dict
+            vehi = simulation.vehicle_dict[vehicle.attrib['id']]
+            # Set location and speed
+            vehi.set_properties(float(vehicle.attrib['x']),
+                                float(vehicle.attrib['y']),
+                                float(vehicle.attrib['speed']))
+
+            # Find car count for each vehicular cloud
+            for i, vc in enumerate(simulation.vc_list):
+                if (vc.rsu_x - vehi.x) ** 2 + (vc.rsu_y - vehi.y) ** 2 <= cfg['comm_range']['v2rsu'] ** 2:
+                    vc_vehi_count[i] += 1
+        # The list of vehicular clouds that have enough cars
+        vc_list = [vc for i, vc in enumerate(simulation.vc_list) if
+                   vc_vehi_count[i] >= cfg['simulation']['vc_min_vehi']]
+        # The combined list of physical rsus and vcs
+        rsu_list = simulation.rsu_list + vc_list
+
+        # For each vehicle on the map at the timestep (Training)
+        for vehicle in timestep.findall('vehicle'):
+
+            psutil.cpu_percent()
+
+            # Find the polygon the vehi is currently in.
+            polygon_index = vehi.in_polygon(simulation.polygons)
+            # If the vehi goes into a new polygon
+            if polygon_index not in vehi.training_data_assigned:
+                # There is still data in this epoch. If each polygon has data but less than the batch
+                # size, discard them.
+                if any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon):
+                    # There is still enough data in this polygon.
+                    if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
+                        training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
+                                                                                                     polygon_index)
+
+                        # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
+                        data_found = time.time()
+                        print([len(i) for i in simulation.training_data_bypolygon])
+                        print('CPU %:', psutil.cpu_percent())
+
+                        if cfg['write_runtime_statistics']:
+                            with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
+                                      mode='a') as f:
+                                if data_last_found is not None:
+                                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                                    writer.writerow([data_found - data_last_found])
+                        data_last_found = time.time()
+
+                        vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
+                else:
+                    epoch_runtime_end = time.time()
+                    simulation.print_accuracy(epoch_runtime_end - epoch_runtime_start,
+                                              simulation.running_time + float(timestep.attrib['time']))
+                    epoch_runtime_start = time.time()
+                    simulation.new_epoch()
+                    if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
+                        training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
+                                                                                                     polygon_index)
+                        vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
+
+            closest_rsu = vehi.closest_rsu(rsu_list)
+            if closest_rsu is not None:
+                # Download Model
+                vehi.download_model_from(simulation.central_server)
+
+                vehi.compute_and_upload(simulation, closest_rsu)
+
+    simulation.running_time += float(timestep.attrib['time'])
+
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
@@ -72,95 +163,8 @@ def simulate(simulation):
         # Clear the vehicle dict after each loop of sumo file
         simulation.vehicle_dict = {}
 
-        # For each time step (sec) in the FCD file 
-        for timestep in root:
+        simulate_cars(simulation, root)
 
-            # The number of epochs does not necessarily correlate with a full simulation of the FCD file.
-            if simulation.num_epoch > cfg['neural_network']['epoch']:
-                break
-
-            if float(timestep.attrib['time']) % 200 == 0:
-                print(timestep.attrib['time'])
-                if cfg['write_cpu_and_memory']:
-                    with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                              mode='a') as f:
-                        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-
-            vc_vehi_count = [0 for vc in simulation.vc_list]
-            # For each vehicle on the map at the timestep (Find available vehicular clouds)
-            for vehicle in timestep.findall('vehicle'):
-
-                # If vehicle not yet stored in vehicle_dict
-                if vehicle.attrib['id'] not in simulation.vehicle_dict:
-                    simulation.add_into_vehicle_dict(vehicle)
-                # Get the vehicle object from vehicle_dict
-                vehi = simulation.vehicle_dict[vehicle.attrib['id']]  
-                # Set location and speed
-                vehi.set_properties(float(vehicle.attrib['x']),
-                                    float(vehicle.attrib['y']),
-                                    float(vehicle.attrib['speed']))
-
-                # Find car count for each vehicular cloud
-                for i, vc in enumerate(simulation.vc_list):
-                    if (vc.rsu_x - vehi.x) ** 2 + (vc.rsu_y - vehi.y) ** 2 <= cfg['comm_range']['v2rsu'] ** 2:
-                        vc_vehi_count[i] += 1
-            # The list of vehicular clouds that have enough cars
-            vc_list = [vc for i, vc in enumerate(simulation.vc_list) if vc_vehi_count[i] >= cfg['simulation']['vc_min_vehi']]
-            # The combined list of physical rsus and vcs
-            rsu_list = simulation.rsu_list + vc_list  
-
-            # For each vehicle on the map at the timestep (Training)
-            for vehicle in timestep.findall('vehicle'):
-
-                psutil.cpu_percent()
-
-                # Find the polygon the vehi is currently in.
-                polygon_index = vehi.in_polygon(simulation.polygons)
-                # If the vehi goes into a new polygon
-                if polygon_index not in vehi.training_data_assigned:
-                    # There is still data in this epoch. If each polygon has data but less than the batch
-                    # size, discard them.
-                    if any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon):
-                        # There is still enough data in this polygon.
-                        if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
-                            training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
-                                                                                                         polygon_index)
-
-                            # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
-                            data_found = time.time()
-                            print([len(i) for i in simulation.training_data_bypolygon])
-                            print('CPU %:', psutil.cpu_percent())
-
-                            if cfg['write_runtime_statistics']:
-                                with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
-                                          mode='a') as f:
-                                    if data_last_found is not None:
-                                        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                                        writer.writerow([data_found - data_last_found])
-                            data_last_found = time.time()
-
-                            vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
-                    else:
-                        epoch_runtime_end = time.time()
-                        simulation.print_accuracy(epoch_runtime_end - epoch_runtime_start, simulation.running_time + float(timestep.attrib['time']))
-                        epoch_runtime_start = time.time()
-                        simulation.new_epoch()
-                        if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
-                            training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
-                                                                                                         polygon_index)
-                            vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
-
-                closest_rsu = vehi.closest_rsu(rsu_list)
-                if closest_rsu is not None:
-                    # Download Model
-                    vehi.download_model_from(simulation.central_server)
-
-                    vehi.compute_and_upload(simulation, closest_rsu)
-
-
-        simulation.running_time += float(timestep.attrib['time'])   
-                
     return simulation.central_server.net
 
 
