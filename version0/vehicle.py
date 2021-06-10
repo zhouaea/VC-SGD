@@ -108,11 +108,7 @@ class Vehicle:
             X = self.training_data.pop()
             y = self.training_label.pop()
         else:
-            if cfg['analyze_dataset']:
-                print('training data number:', args[0])
-                X = args[1][0]
-            else:
-                X = args[0]
+            X = args[0]
             y = args[1]
 
         with autograd.record():

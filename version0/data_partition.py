@@ -88,13 +88,9 @@ elif cfg['dataset'] == 'pascalvoc':
 
     # Load PASCAL VOC datasets into dataloaders.
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
-    if cfg['analyze_dataset']:
-        shuffle_train_data = False
-    else:
-        shuffle_train_data = True
 
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA,
-                                          shuffle=shuffle_train_data,
+                                          shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='discard')
 
     val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
@@ -111,7 +107,7 @@ if cfg['write_cpu_and_memory']:
 if cfg['write_cpu_and_memory']:
     psutil.cpu_percent()
 
-if cfg['analyze_dataset'] or cfg['even_distribution']:
+if cfg['even_distribution']:
     for (X, y) in train_data:
         X_first_half, y_first_half = list(X.asnumpy()), list(y.asnumpy())
 else:
@@ -119,18 +115,6 @@ else:
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
     # split the batches into two halves.
     if cfg['dataset'] == 'pascalvoc':
-        # # TODO This doesn't really split data into close to equal halves
-        # for counter, batch in enumerate(train_data):
-        #     X, y = batch
-        #     if counter < str(len(train_data) / 2:
-        #         X_first_half.append(list(X.asnumpy()))
-        #         y_first_half.append(list(y.asnumpy()))
-        #     else:
-        #         X_second_half.append(list(X.asnumpy()))
-        #         y_second_half.append(list(y.asnumpy()))
-
-        # Determine shape of training data and what is inside of it.
-
         # For partitioning small subset of data.
         for (X, y) in train_data:
             # Data and labels are initially mxnet nd arrays, but the data becomes a list of numpy nd arrays and the label

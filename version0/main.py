@@ -58,7 +58,6 @@ def extract_batch_from_polygon(simulation, polygon_index):
 
     return training_data_assigned, training_label_assigned
 
-@profile
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
