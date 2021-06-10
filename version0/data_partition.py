@@ -7,7 +7,7 @@ import yaml
 import time
 import numpy as np
 import mxnet as mx
-from mxnet.image import imresize as data_resize
+from mxnet.image import imresize as data_resize, nd
 from mxnet.gluon.data.vision import transforms
 from gluoncv.data import transforms as gcv_transforms
 from gluoncv import data, utils
@@ -68,14 +68,15 @@ elif cfg['dataset'] == 'pascalvoc':
     # without root='' argument, VOCDetection() assumes data is in ~/.mxnet/datasets/voc
 
     # typically we use 2007+2012 trainval splits for training data
+    print('loading training dataset...')
     train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
 
-    val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
-                                     transform=transform)
-
-    # and use 2007 test as validation data
-    val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+    # val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+    #                                  transform=transform)
+    #
+    # # and use 2007 test as validation data
+    # val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
 
     if cfg['write_cpu_and_memory']:
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
@@ -89,14 +90,17 @@ elif cfg['dataset'] == 'pascalvoc':
     # Load PASCAL VOC datasets into dataloaders.
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
+    print('loading dataloader...')
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA,
-                                          shuffle=True,
+                                          shuffle=False,
                                           batchify_fn=batchify_fn, last_batch='discard')
 
-    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
-                                              batchify_fn=batchify_fn, last_batch='keep')
-    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
-                                             batchify_fn=batchify_fn, last_batch='keep')
+    val_train_data = None
+    val_test_data = None
+    # val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
+    #                                           batchify_fn=batchify_fn, last_batch='keep')
+    # val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
+    #                                          batchify_fn=batchify_fn, last_batch='keep')
 
 if cfg['write_cpu_and_memory']:
     with open(os.path.join('collected_results', 'computer_resource_percentages'),
@@ -110,6 +114,7 @@ if cfg['write_cpu_and_memory']:
 if cfg['even_distribution']:
     for (X, y) in train_data:
         X_first_half, y_first_half = list(X.asnumpy()), list(y.asnumpy())
+
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
