@@ -39,7 +39,6 @@ file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
-@profile
 def extract_batch_from_polygon(simulation, polygon_index):
     # For the pascalvoc dataset, automatically batch training data for each vehicle
     if cfg['dataset'] == 'pascalvoc':
@@ -59,6 +58,7 @@ def extract_batch_from_polygon(simulation, polygon_index):
 
     return training_data_assigned, training_label_assigned
 
+@profile
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
