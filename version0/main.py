@@ -67,6 +67,10 @@ def simulate_cars(simulation, root, data_last_found, epoch_runtime_start):
         if simulation.num_epoch > cfg['neural_network']['epoch']:
             break
 
+        # TEMPORARY
+        if timestep == 400:
+            break
+
         if float(timestep.attrib['time']) % 200 == 0:
             print(timestep.attrib['time'])
             if cfg['write_cpu_and_memory']:
