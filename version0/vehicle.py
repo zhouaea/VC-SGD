@@ -188,7 +188,6 @@ class Vehicle:
         self.training_data_assigned = {}
 
     # Return the RSU that is cloest to the vehicle
-    @profile
     def closest_rsu(self, rsu_list):
         shortest_distance = 99999999  # placeholder (a random large number)
         closest_rsu = None
