@@ -129,14 +129,14 @@ def simulate(simulation):
                     # size, discard them.
                     if ((any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon)) and (
                             cfg['dataset'] != 'pascalvoc')) or (
-                                    (any((current_batch_index + 1) * BATCH_SIZE >= len(
+                                    (any((current_batch_index + 1) * BATCH_SIZE <= len(
                                         simulation.training_data_bypolygon[i])
                                          for i, current_batch_index in
                                          enumerate(simulation.current_batch_index_by_polygon))) and (
                             cfg['dataset'] == 'pascalvoc')):
                         # There is still enough data in this polygon.
                         if (cfg['dataset'] != 'pascalvoc' and
-                            len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE) or (
+                            len(simulation.training_data_bypolygon[polygon_index]) <= BATCH_SIZE) or (
                                 cfg['dataset'] == 'pascalvoc' and (
                                 (simulation.current_batch_index_by_polygon[polygon_index] + 1) * BATCH_SIZE <= len(
                             simulation.training_data_bypolygon[polygon_index]))):
