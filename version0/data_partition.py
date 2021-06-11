@@ -74,11 +74,11 @@ elif cfg['dataset'] == 'pascalvoc':
     train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
 
-    # val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
-    #                                  transform=transform)
-    #
-    # # and use 2007 test as validation data
-    # val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+    val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+                                     transform=transform)
+
+    # and use 2007 test as validation data
+    val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
 
     if cfg['write_cpu_and_memory']:
         with open(os.path.join('collected_results', 'computer_resource_percentages'),
@@ -97,12 +97,10 @@ elif cfg['dataset'] == 'pascalvoc':
                                           shuffle=False,
                                           batchify_fn=batchify_fn, last_batch='discard')
 
-    val_train_data = None
-    val_test_data = None
-    # val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
-    #                                           batchify_fn=batchify_fn, last_batch='keep')
-    # val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
-    #                                          batchify_fn=batchify_fn, last_batch='keep')
+    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
+                                              batchify_fn=batchify_fn, last_batch='keep')
+    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
+                                             batchify_fn=batchify_fn, last_batch='keep')
 
 if cfg['write_cpu_and_memory']:
     with open(os.path.join('collected_results', 'computer_resource_percentages'),
