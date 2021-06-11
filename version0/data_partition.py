@@ -97,9 +97,9 @@ elif cfg['dataset'] == 'pascalvoc':
                                           shuffle=False,
                                           batchify_fn=batchify_fn, last_batch='discard')
 
-    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(10), BATCH_SIZE, shuffle=False,
+    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(100), BATCH_SIZE, shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
-    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(10), BATCH_SIZE, shuffle=False,
+    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(100), BATCH_SIZE, shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
 
 if cfg['write_cpu_and_memory']:
