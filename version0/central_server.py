@@ -262,7 +262,7 @@ class Simulation:
             cls_loss = np.array(self.cls_losses).mean()
             sum_loss = np.array(self.sum_losses).mean()
 
-            self.save_data(accu, sum_loss, epoch_runtime, epoch_runtime, virtual_time_step, obj_loss, center_loss, scale_loss, cls_loss)
+            self.save_data(accu, sum_loss, epoch_runtime, virtual_time_step, obj_loss, center_loss, scale_loss, cls_loss)
             print(
                 "Epoch {:03d}: Loss: {:03f}, Accuracy: {}, Epoch Runtime: {}, Virtual Time Step: {}, Object Loss: {:03f}, Center Loss: {:03f}, Scale Loss: {:03f}, CLS Loss: {:03f}\n".format(
                     self.num_epoch,

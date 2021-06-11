@@ -34,9 +34,9 @@ pascalvoc_metrics:
 
 # ********* Statistical Analysis Parameters *********
 # Write runtime statistics in csv files.
-write_runtime_statistics: false
+write_runtime_statistics: true
 # Print CPU and Memory Usage
-write_cpu_and_memory: false
+write_cpu_and_memory: true
 # Instead of partitioning by classes, partition so that every zone has equal training data for faster performance.
 even_distribution: true
 
