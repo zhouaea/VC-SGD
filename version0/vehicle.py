@@ -41,7 +41,7 @@ class Vehicle:
     - gradients
     """
 
-    @profile
+    
     def __init__(self, car_id):
         self.car_id = car_id
         self.x = 0
@@ -55,17 +55,16 @@ class Vehicle:
         self.gradients = None
         # self.rsu_assigned = None
 
-    @profile
     def set_properties(self, x, y, speed):
         self.x = x
         self.y = y
         self.speed = speed
 
-    @profile
+    
     def download_model_from(self, central_server):
         self.net = central_server.net
 
-    @profile
+    
     def handle_data(self):
         num_polygons = len(self.training_data_assigned)
         # Combine data from different polygons
@@ -83,7 +82,7 @@ class Vehicle:
             self.training_data.append(nd.array(combined_data[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
-    @profile
+    
     def compute(self, simulation, closest_rsu, *args):
         psutil.cpu_percent()
         
@@ -143,7 +142,7 @@ class Vehicle:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([end - start])
 
-    @profile
+    
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu
         rsu.accumulative_gradients.append(self.gradients)
@@ -151,7 +150,7 @@ class Vehicle:
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             rsu.communicate_with_central_server(simulation.central_server)
 
-    @profile
+    
     def compute_and_upload(self, simulation, closest_rsu):
         # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
         if cfg['dataset'] == 'pascalvoc':
