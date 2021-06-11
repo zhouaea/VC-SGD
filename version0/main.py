@@ -146,7 +146,8 @@ def simulate(simulation):
 
                             # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
                             data_found = time.time()
-                            print([i for i in simulation.current_batch_index_by_polygon])
+                            # This calculation only works for even partitioning.
+                            print([cfg['num_training_data'] - i * BATCH_SIZE for i in simulation.current_batch_index_by_polygon])
                             print('CPU %:', psutil.cpu_percent())
 
                             if cfg['write_runtime_statistics']:
