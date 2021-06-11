@@ -24,7 +24,7 @@ BATCH_SIZE = cfg['neural_network']['batch_size']
 
 # random.seed(cfg['seed'])
 # np.random.seed(cfg['seed'])
-
+counter = 0
 
 class Vehicle:
     """
@@ -115,8 +115,8 @@ class Vehicle:
             if cfg['dataset'] == 'pascalvoc':
                 # Passing input with * will calculate the loss instead of the model output.
                 # Acquire all variables required to calculate loss.
-                gt_bboxes = mx.nd.array(y[:, :, :4]).astype(np.float32)
-                gt_ids = mx.nd.array(y[:, :, 4:5])
+                gt_bboxes = y[:, :, :4]
+                gt_ids = y[:, :, 4:5]
 
                 objectness, center_targets, scale_targets, weights, class_targets = self.target_generator(
                     self.fake_x, self.feat_maps, self.anchors, self.offsets,

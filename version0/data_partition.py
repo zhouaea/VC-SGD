@@ -28,6 +28,7 @@ def transform(data, label):
         data = data_resize(data, cfg['neural_network']['height'], cfg['neural_network']['width'])
         label = label_bbox_resize(label, in_size=(w, h),
                                   out_size=(cfg['neural_network']['width'], cfg['neural_network']['height']))
+        label = label.astype(np.float32)
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
         data = mx.nd.transpose(data, (2, 0, 1))
     data = data.astype(np.float32) / 255
@@ -64,10 +65,10 @@ elif cfg['dataset'] == 'pascalvoc':
     # Call psutil before and after the code you want to analyze.
     if cfg['write_cpu_and_memory']:
         psutil.cpu_percent()
-    # NOTE: add root='../data/pascalvoc' if data is stored in VC-SGD/data/pascalvoc folder
-    # without root='' argument, VOCDetection() assumes data is in ~/.mxnet/datasets/voc
 
-    # typically we use 2007+2012 trainval splits for training data
+    # Typically we use 2007+2012 trainval splits for training data.
+    # Note that originally the training and label data are numpy ndarrays but are converted to mxnet ndarrays
+    # when they are passed into the dataloader.
     print('loading training dataset...')
     train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
@@ -112,8 +113,10 @@ if cfg['write_cpu_and_memory']:
     psutil.cpu_percent()
 
 if cfg['even_distribution']:
+    # X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
+    # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     for (X, y) in train_data:
-        X_first_half, y_first_half = list(X.asnumpy()), list(y.asnumpy())
+        X_first_half, y_first_half = X, y
 
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
@@ -212,10 +215,8 @@ def data_for_polygon(polygons):
             one_tenth_index = len(X_first_half) // 10
             X_ = X_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
             y_ = y_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
-            X_new = copy.deepcopy(X_)
-            y_new = copy.deepcopy(y_)
-            train_data_bypolygon.append(X_new)
-            train_label_bypolygon.append(y_new)
+            train_data_bypolygon.append(X_)
+            train_label_bypolygon.append(y_)
     else:
         """
             Returns training data and labels for new epochs.

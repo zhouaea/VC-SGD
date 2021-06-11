@@ -10,7 +10,7 @@ from vehicle import Vehicle
 import yaml
 from locationPicker_v3 import output_junctions
 # from map_partition import polygons
-import xml.etree.ElementTree as ET 
+import xml.etree.ElementTree as ET
 
 import mxnet as mx
 from mxnet import nd, autograd, gluon
@@ -22,7 +22,6 @@ import pickle
 from memory_profiler import profile
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model for image classification.')
     parser.add_argument('--num-gpus', type=int, default=0,
@@ -32,24 +31,30 @@ def parse_args():
     opt = parser.parse_args()
     return opt
 
+
 import sys
+
 print(' '.join(sys.argv))
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
+
 def extract_batch_from_polygon(simulation, polygon_index):
     # For the pascalvoc dataset, automatically batch training data for each vehicle
     if cfg['dataset'] == 'pascalvoc':
-        training_data_assigned = nd.array(simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE])
-        del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-        training_label_assigned = nd.array(simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE])
-        del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
-        # training_data_assigned = nd.stack(nd.array(simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]))
-        # del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-        # training_label_assigned = nd.stack(nd.array(simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]))
-        # del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+        # We do not delete elements in the list because mxnet ndarrays do not have delete operations.
+        # Storing slice references of the training data will suffice.
+        training_data_assigned = simulation.training_data_bypolygon[polygon_index][
+                                 simulation.current_batch_index_by_polygon[polygon_index] * BATCH_SIZE:(
+                                                                                                               simulation.current_batch_index_by_polygon[
+                                                                                                                   polygon_index] + 1) * BATCH_SIZE]
+        training_label_assigned = simulation.training_label_bypolygon[polygon_index][
+                                  simulation.current_batch_index_by_polygon[polygon_index] * BATCH_SIZE:(
+                                                                                                                simulation.current_batch_index_by_polygon[
+                                                                                                                    polygon_index] + 1) * BATCH_SIZE]
+        simulation.current_batch_index_by_polygon[polygon_index] += 1
     else:
         training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
         del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
@@ -58,13 +63,14 @@ def extract_batch_from_polygon(simulation, polygon_index):
 
     return training_data_assigned, training_label_assigned
 
+@profile
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
     simulation.new_epoch()
     data_last_found = None
     epoch_runtime_start = time.time()
-    
+
     # Maximum training epochs
     while simulation.num_epoch <= cfg['neural_network']['epoch']:
 
@@ -94,7 +100,7 @@ def simulate(simulation):
                 if vehicle.attrib['id'] not in simulation.vehicle_dict:
                     simulation.add_into_vehicle_dict(vehicle)
                 # Get the vehicle object from vehicle_dict
-                vehi = simulation.vehicle_dict[vehicle.attrib['id']]  
+                vehi = simulation.vehicle_dict[vehicle.attrib['id']]
                 # Set location and speed
                 vehi.set_properties(float(vehicle.attrib['x']),
                                     float(vehicle.attrib['y']),
@@ -105,9 +111,10 @@ def simulate(simulation):
                     if (vc.rsu_x - vehi.x) ** 2 + (vc.rsu_y - vehi.y) ** 2 <= cfg['comm_range']['v2rsu'] ** 2:
                         vc_vehi_count[i] += 1
             # The list of vehicular clouds that have enough cars
-            vc_list = [vc for i, vc in enumerate(simulation.vc_list) if vc_vehi_count[i] >= cfg['simulation']['vc_min_vehi']]
+            vc_list = [vc for i, vc in enumerate(simulation.vc_list) if
+                       vc_vehi_count[i] >= cfg['simulation']['vc_min_vehi']]
             # The combined list of physical rsus and vcs
-            rsu_list = simulation.rsu_list + vc_list  
+            rsu_list = simulation.rsu_list + vc_list
 
             # For each vehicle on the map at the timestep (Training)
             for vehicle in timestep.findall('vehicle'):
@@ -120,15 +127,27 @@ def simulate(simulation):
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    if any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon):
+                    if ((any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon) and (
+                            cfg['dataset'] != 'pascalvoc'))
+                            or (
+                                    (any((current_batch_index + 1) * BATCH_SIZE >= len(
+                                        simulation.training_data_bypolygon[i])
+                                         for i, current_batch_index in
+                                         enumerate(simulation.current_batch_index_by_polygon)))) and (
+                            cfg['dataset'] == 'pascalvoc')):
                         # There is still enough data in this polygon.
-                        if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
+                        if (cfg['dataset'] != 'pascalvoc' and
+                            len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE) or (
+                                cfg['dataset'] == 'pascalvoc' and (
+                                (simulation.current_batch_index_by_polygon[polygon_index] + 1) * BATCH_SIZE <= len(
+                            simulation.training_data_bypolygon[polygon_index]))):
+
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
 
                             # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
                             data_found = time.time()
-                            print([len(i) for i in simulation.training_data_bypolygon])
+                            print([i for i in simulation.current_batch_index_by_polygon])
                             print('CPU %:', psutil.cpu_percent())
 
                             if cfg['write_runtime_statistics']:
@@ -139,16 +158,19 @@ def simulate(simulation):
                                         writer.writerow([data_found - data_last_found])
                             data_last_found = time.time()
 
-                            vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
+                            vehi.training_data_assigned[polygon_index] = (
+                                training_data_assigned, training_label_assigned)
                     else:
                         epoch_runtime_end = time.time()
-                        simulation.print_accuracy(epoch_runtime_end - epoch_runtime_start, simulation.running_time + float(timestep.attrib['time']))
+                        simulation.print_accuracy(epoch_runtime_end - epoch_runtime_start,
+                                                  simulation.running_time + float(timestep.attrib['time']))
                         epoch_runtime_start = time.time()
                         simulation.new_epoch()
                         if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
-                            vehi.training_data_assigned[polygon_index] = (training_data_assigned, training_label_assigned)
+                            vehi.training_data_assigned[polygon_index] = (
+                                training_data_assigned, training_label_assigned)
 
                 closest_rsu = vehi.closest_rsu(rsu_list)
                 if closest_rsu is not None:
@@ -157,9 +179,8 @@ def simulate(simulation):
 
                     vehi.compute_and_upload(simulation, closest_rsu)
 
+        simulation.running_time += float(timestep.attrib['time'])
 
-        simulation.running_time += float(timestep.attrib['time'])   
-                
     return simulation.central_server.net
 
 
@@ -178,15 +199,15 @@ def main():
     ROU_FILE = cfg['simulation']['ROU_FILE']
     NET_FILE = cfg['simulation']['NET_FILE']
     FCD_FILE = cfg['simulation']['FCD_FILE']
-    
-    RSU_RANGE = cfg['comm_range']['v2rsu']           # range of RSU
-    NUM_RSU = cfg['simulation']['num_rsu']           # number of RSU
+
+    RSU_RANGE = cfg['comm_range']['v2rsu']  # range of RSU
+    NUM_RSU = cfg['simulation']['num_rsu']  # number of RSU
     NUM_VC = cfg['simulation']['num_vc']
 
     sumo_data = SUMO_Dataset(ROU_FILE, NET_FILE)
     vehicle_dict = {}
     # location_list = sumo_data.rsuList_random(RSU_RANGE, NUM_RSU+NUM_VC) # uncomment this for random locations
-    location_list = sumo_data.rsuList(RSU_RANGE, NUM_RSU+NUM_VC, output_junctions)
+    location_list = sumo_data.rsuList(RSU_RANGE, NUM_RSU + NUM_VC, output_junctions)
 
     # Polygons class of zones partitioned
     with open("map_partition.data", "rb") as filehandle:
@@ -201,7 +222,6 @@ def main():
     # vc_list = location_list[:NUM_VC]
 
     central_server = Central_Server(context)
-
 
     # def transform(data, label):
     #     if cfg['dataset'] == 'cifar10':
