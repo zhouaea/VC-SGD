@@ -93,6 +93,15 @@ class Central_Server:
                         param.data() - lr * mean_nd[idx:(idx + param.data().size)].reshape(param.data().shape))
                     idx += param.data().size
             self.accumulative_gradients = []
+
+            # Update targets when updating model.
+            old_ctx = list(self.central_server.net.collect_params().values())[0].list_ctx()
+            self.central_server.net.collect_params().reset_ctx(mx.cpu())
+            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
+            with autograd.train_mode():
+                _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.central_server.net(self.fake_x)
+            self.central_server.net.collect_params().reset_ctx(old_ctx)
+
             if cfg['write_cpu_and_memory']:
                 with open(os.path.join('collected_results', 'computer_resource_percentages'),
                           mode='a') as f:
