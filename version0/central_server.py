@@ -16,6 +16,7 @@ import mxnet as mx
 from mxnet import gluon, nd, autograd
 import csv
 import os
+from memory_profiler import profile
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -29,6 +30,7 @@ class Central_Server:
     - accumulative_gradients
     """
 
+    @profile
     def __init__(self, ctx):
         self.net = gluon.nn.Sequential()
         if cfg['dataset'] == 'cifar10':
@@ -74,6 +76,7 @@ class Central_Server:
 
     # Update the model with its accumulative gradients
     # Used for batch gradient descent
+    @profile
     def update_model(self):
         if cfg['write_cpu_and_memory']:
             psutil.cpu_percent()
@@ -107,6 +110,7 @@ class Simulation:
     - dataset
     """
 
+    @profile
     def __init__(self, FCD_file, vehicle_dict: dict, rsu_list: list, vc_list: list, polygons, central_server,
                  num_round):
         self.FCD_file = FCD_file
@@ -145,9 +149,11 @@ class Simulation:
             self.epoch_loss = mx.metric.CrossEntropy()
             self.epoch_accuracy = mx.metric.Accuracy()
 
+    @profile
     def add_into_vehicle_dict(self, vehicle):
         self.vehicle_dict[vehicle.attrib['id']] = Vehicle(vehicle.attrib['id'])
 
+    @profile
     def get_accu_loss(self):
         if cfg['write_cpu_and_memory']:
             psutil.cpu_percent()
@@ -220,6 +226,7 @@ class Simulation:
                 writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
         print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
 
+    @profile
     def print_accuracy(self, epoch_runtime, virtual_time_step):
         self.epoch_accuracy.reset()
         if cfg['dataset'] == 'pascalvoc':
@@ -259,6 +266,7 @@ class Simulation:
                                                                           loss,
                                                                           accu))
 
+    @profile
     def save_data(self, accu, loss, epoch_runtime, virtual_time_step, *losses):
         if not os.path.exists('collected_results'):
             os.makedirs('collected_results')
@@ -275,6 +283,7 @@ class Simulation:
             else:
                 writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, cfg['aggregation_method'], cfg['attack']])
 
+    @profile
     def new_epoch(self):
         self.num_epoch += 1
         # for i, (data, label) in enumerate(self.training_set):

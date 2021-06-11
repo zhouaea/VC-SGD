@@ -17,6 +17,7 @@ from gluoncv.data import VOCDetection
 from collections import defaultdict
 import copy
 from sklearn.utils import shuffle
+from memory_profiler import profile
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -201,6 +202,7 @@ else:
         print("Number of classes: ", len(train_data_byclass.values()))
 
 
+@profile
 def data_for_polygon(polygons):
     start = time.time()
     train_data_bypolygon = []

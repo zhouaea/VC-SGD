@@ -17,6 +17,7 @@ from memory_profiler import profile
 
 import mxnet as mx
 from mxnet import nd, autograd, gluon
+from memory_profiler import profile
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -40,6 +41,7 @@ class Vehicle:
     - gradients
     """
 
+    @profile
     def __init__(self, car_id):
         self.car_id = car_id
         self.x = 0
@@ -59,11 +61,13 @@ class Vehicle:
             self.feat_maps = None
         # self.rsu_assigned = None
 
+    @profile
     def set_properties(self, x, y, speed):
         self.x = x
         self.y = y
         self.speed = speed
 
+    @profile
     def download_model_from(self, central_server):
         self.net = central_server.net
         # Calculate targets using the new model. This is required to calculate object detection loss.
@@ -79,6 +83,7 @@ class Vehicle:
             central_server.net.collect_params().reset_ctx(old_ctx)
 
 
+    @profile
     def handle_data(self):
         num_polygons = len(self.training_data_assigned)
         # Combine data from different polygons
@@ -96,6 +101,7 @@ class Vehicle:
             self.training_data.append(nd.array(combined_data[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
+    @profile
     def compute(self, simulation, closest_rsu, *args):
         psutil.cpu_percent()
         
@@ -155,6 +161,7 @@ class Vehicle:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([end - start])
 
+    @profile
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu
         rsu.accumulative_gradients.append(self.gradients)
@@ -162,6 +169,7 @@ class Vehicle:
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             rsu.communicate_with_central_server(simulation.central_server)
 
+    @profile
     def compute_and_upload(self, simulation, closest_rsu):
         # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
         if cfg['dataset'] == 'pascalvoc':
@@ -180,6 +188,7 @@ class Vehicle:
         self.training_data_assigned = {}
 
     # Return the RSU that is cloest to the vehicle
+    @profile
     def closest_rsu(self, rsu_list):
         shortest_distance = 99999999  # placeholder (a random large number)
         closest_rsu = None
@@ -192,6 +201,7 @@ class Vehicle:
 
     # Return a list of RSUs that is within the range of the vehicle
     # with each RSU being sorted from the closest to the furtherst
+    @profile
     def in_range_rsus(self, rsu_list):
         in_range_rsus = []
         for rsu in rsu_list:
@@ -201,6 +211,7 @@ class Vehicle:
         return [heapq.heappop(in_range_rsus)[1] for i in range(len(in_range_rsus))]
 
     # Return the index of the polygon the vehicle is currently in
+    @profile
     def in_polygon(self, polygons):
         for i, polygon in enumerate(polygons):
             if polygon.contains(Point(self.x, self.y)):
