@@ -53,12 +53,6 @@ class Vehicle:
         self.training_label = []
         # self.training_label_assigned = []
         self.gradients = None
-        if cfg['dataset'] == 'pascalvoc':
-            self.target_generator = None
-            self.fake_x = None
-            self.anchors = None
-            self.offsets = None
-            self.feat_maps = None
         # self.rsu_assigned = None
 
     @profile
@@ -112,7 +106,7 @@ class Vehicle:
                 gt_bboxes = y[:, :, :4]
                 gt_ids = y[:, :, 4:5]
 
-                objectness, center_targets, scale_targets, weights, class_targets = self.target_generator(
+                objectness, center_targets, scale_targets, weights, class_targets = simulation.target_generator(
                     simulation.fake_x, simulation.feat_maps, simulation.anchors, simulation.offsets,
                     gt_bboxes, gt_ids, None)
 
