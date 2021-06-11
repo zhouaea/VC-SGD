@@ -201,7 +201,6 @@ class Vehicle:
 
     # Return a list of RSUs that is within the range of the vehicle
     # with each RSU being sorted from the closest to the furtherst
-    @profile
     def in_range_rsus(self, rsu_list):
         in_range_rsus = []
         for rsu in rsu_list:
@@ -211,7 +210,6 @@ class Vehicle:
         return [heapq.heappop(in_range_rsus)[1] for i in range(len(in_range_rsus))]
 
     # Return the index of the polygon the vehicle is currently in
-    @profile
     def in_polygon(self, polygons):
         for i, polygon in enumerate(polygons):
             if polygon.contains(Point(self.x, self.y)):
