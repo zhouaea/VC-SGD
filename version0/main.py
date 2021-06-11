@@ -127,13 +127,12 @@ def simulate(simulation):
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    if ((any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon) and (
-                            cfg['dataset'] != 'pascalvoc'))
-                            or (
+                    if ((any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon)) and (
+                            cfg['dataset'] != 'pascalvoc')) or (
                                     (any((current_batch_index + 1) * BATCH_SIZE >= len(
                                         simulation.training_data_bypolygon[i])
                                          for i, current_batch_index in
-                                         enumerate(simulation.current_batch_index_by_polygon)))) and (
+                                         enumerate(simulation.current_batch_index_by_polygon))) and (
                             cfg['dataset'] == 'pascalvoc')):
                         # There is still enough data in this polygon.
                         if (cfg['dataset'] != 'pascalvoc' and
