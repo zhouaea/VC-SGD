@@ -235,13 +235,14 @@ def data_for_polygon(polygons):
             label_data.append(y_quarter)
 
         # In each quarter of the training and label data, put a tenth into each polygon
+        # TODO: iterate through each quarter first for better cache locality.
         for i in range(len(polygons)):
-            one_tenth_train_data = nd.array()
-            one_tenth_label_data = nd.array()
+            one_tenth_train_data = nd.array([])
+            one_tenth_label_data = nd.array([])
             for j in range(len(train_data)):
                 one_tenth_index = len(train_data[j]) // 10 + 1
-                one_tenth_train_data.append(train_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
-                one_tenth_label_data.append(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
+                one_tenth_train_data.concat(train_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
+                one_tenth_label_data.concat(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
             train_data_bypolygon.append(one_tenth_train_data)
             train_label_bypolygon.append(one_tenth_label_data)
     else:
