@@ -19,6 +19,7 @@ python3.9 --version
 sudo apt install python3.9-distutils
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3.9 get-pip.py
+sudo -H pip install pip==8.1.1
 
 # Install dependencies
 python3.9 -m pip install -r requirements.txt

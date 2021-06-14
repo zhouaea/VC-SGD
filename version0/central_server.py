@@ -189,7 +189,7 @@ class Simulation:
                 with open(os.path.join('collected_results', 'time_to_calculate_accuracy_on_one_datum'), mode='a') as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([end - start])
-        print('time to calculate accuracy for', cfg['test_and_val_train_batch_size'], 'test data:', end-start_for_all_data)
+        print('time to calculate accuracy for', cfg['num_test_data'], 'test data:', end-start_for_all_data)
 
 
         start_for_all_data = time.time()
@@ -232,7 +232,7 @@ class Simulation:
                       mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-        print('time it takes to calculate loss for', cfg['test_and_val_train_batch_size'], 'validation data', end-start_for_all_data)
+        print('time it takes to calculate loss for', cfg['num_val_train_data'], 'validation data', end-start_for_all_data)
 
     
     def print_accuracy(self, epoch_runtime, virtual_time_step):
