@@ -98,11 +98,13 @@ elif cfg['dataset'] == 'pascalvoc':
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
-    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']), cfg['test_and_val_train_batch_size'],
-shuffle=False,
+    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']),
+                                              cfg['test_and_val_train_batch_size'],
+                                              shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
-    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(cfg['num_test_data']), cfg['test_and_val_train_batch_size'],
-shuffle=False,
+    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(cfg['num_test_data']),
+                                             cfg['test_and_val_train_batch_size'],
+                                             shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
 
     # Clean up unused datasets
@@ -208,6 +210,9 @@ else:
 
 @profile
 def data_for_polygon(polygons):
+    """
+        Returns training data and labels for new epochs.
+    """
     start = time.time()
     train_data_bypolygon = []
     train_label_bypolygon = []
@@ -224,24 +229,22 @@ def data_for_polygon(polygons):
         # NOTE: X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
         # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
         for i, (X, y) in enumerate(train_data):
-            if i == 0:
-                X_quarter, y_quarter = X, y
-                # Hopefully these add the reference to the data and not the data itself
-                train_data.append(X_quarter)
-                label_data.append(y_quarter)
+            X_quarter, y_quarter = X, y
+            # Hopefully these add the reference to the data and not the data itself
+            train_data.append(X_quarter)
+            label_data.append(y_quarter)
 
         # In each quarter of the training and label data, put a tenth into each polygon
         for i in range(len(polygons)):
+            one_tenth_train_data = nd.array()
+            one_tenth_label_data = nd.array()
             for j in range(len(train_data)):
                 one_tenth_index = len(train_data[j]) // 10 + 1
-                X_ = train_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]
-                y_ = label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]
-                train_data_bypolygon.append(X_)
-                train_label_bypolygon.append(y_)
+                one_tenth_train_data.append(train_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
+                one_tenth_label_data.append(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
+            train_data_bypolygon.append(one_tenth_train_data)
+            train_label_bypolygon.append(one_tenth_label_data)
     else:
-        """
-            Returns training data and labels for new epochs.
-        """
         class_index = 0
 
         # Determine how to split the first 50% of the data into polygons
@@ -312,11 +315,11 @@ def data_for_polygon(polygons):
                 train_data_bypolygon.append(X_new.tolist())
                 train_label_bypolygon.append(y_new.tolist())
 
-        end = time.time()
-        if cfg['write_cpu_and_memory']:
-            with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                      mode='a') as f:
-                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-        print('Time to partition all training data into polygons:', end - start)
+    end = time.time()
+    if cfg['write_cpu_and_memory']:
+        with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                  mode='a') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
+    print('Time to partition all training data into polygons:', end - start)
     return train_data_bypolygon, train_label_bypolygon
