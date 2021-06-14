@@ -168,7 +168,7 @@ class Simulation:
             psutil.cpu_percent()
         # accuracy on testing data
         start_for_all_data = time.time()
-        for i, (data, label) in enumerate(self.val_test_data):
+        for (data, label) in self.val_test_data:
             start = time.time()
             if cfg['dataset'] == 'pascalvoc':
                 outputs = self.central_server.net(data)
@@ -189,13 +189,12 @@ class Simulation:
                 with open(os.path.join('collected_results', 'time_to_calculate_accuracy_on_one_datum'), mode='a') as f:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([end - start])
-        print('time to calculate accuracy for 10 test data:', end-start_for_all_data)
-
+        print('time to calculate accuracy for', cfg['test_and_val_train_batch_size'], 'test data:', end-start_for_all_data)
 
 
         start_for_all_data = time.time()
         # cross entropy on training data
-        for i, (data, label) in enumerate(self.val_train_data):
+        for data, label in self.val_train_data:
             start = time.time()
             if cfg['dataset'] == 'pascalvoc':
                 # Acquire all variables required to calculate loss.
@@ -233,7 +232,7 @@ class Simulation:
                       mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-        print('time it takes to calculate loss for 10 validation data', end-start_for_all_data)
+        print('time it takes to calculate loss for', cfg['test_and_val_train_batch_size'], 'validation data', end-start_for_all_data)
 
     
     def print_accuracy(self, epoch_runtime, virtual_time_step):

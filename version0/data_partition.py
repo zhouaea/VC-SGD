@@ -47,20 +47,20 @@ if cfg['dataset'] == 'cifar10':
         mx.gluon.data.vision.CIFAR10('../data/cx2', train=True, transform=transform).take(num_training_data),
         batch_size=NUM_TRAINING_DATA, shuffle=True, last_batch='discard')
     val_train_data = mx.gluon.data.DataLoader(
-        mx.gluon.data.vision.CIFAR10('../data/cx2', train=True, transform=transform).take(cfg['num_val_loss']),
+        mx.gluon.data.vision.CIFAR10('../data/cx2', train=True, transform=transform).take(cfg['num_val_train_data']),
         batch_size=BATCH_SIZE, shuffle=False, last_batch='keep')
     val_test_data = mx.gluon.data.DataLoader(
-        mx.gluon.data.vision.CIFAR10('../data/cx2', train=False, transform=transform),
+        mx.gluon.data.vision.CIFAR10('../data/cx2', train=False, transform=transform).take(cfg['num_test_data']),
         batch_size=BATCH_SIZE, shuffle=False, last_batch='keep')
 elif cfg['dataset'] == 'mnist':
     train_data = mx.gluon.data.DataLoader(
         mx.gluon.data.vision.MNIST('../data/mnist', train=True, transform=transform).take(num_training_data),
         batch_size=NUM_TRAINING_DATA, shuffle=True, last_batch='discard')
     val_train_data = mx.gluon.data.DataLoader(
-        mx.gluon.data.vision.MNIST('../data/mnist', train=True, transform=transform).take(cfg['num_val_loss']),
+        mx.gluon.data.vision.MNIST('../data/mnist', train=True, transform=transform).take(cfg['num_val_train_data']),
         batch_size=BATCH_SIZE, shuffle=False, last_batch='keep')
     val_test_data = mx.gluon.data.DataLoader(
-        mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform),
+        mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform).take(cfg['num_test_data']),
         batch_size=BATCH_SIZE, shuffle=False, last_batch='keep')
 elif cfg['dataset'] == 'pascalvoc':
     # Call psutil before and after the code you want to analyze.
@@ -97,9 +97,11 @@ elif cfg['dataset'] == 'pascalvoc':
                                           shuffle=False,
                                           batchify_fn=batchify_fn, last_batch='discard')
 
-    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(100), BATCH_SIZE, shuffle=False,
+    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']), cfg['test_and_val_train_batch_size'],
+shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
-    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(100), BATCH_SIZE, shuffle=False,
+    val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(cfg['num_test_data']), cfg['test_and_val_train_batch_size'],
+shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
 
 if cfg['write_cpu_and_memory']:

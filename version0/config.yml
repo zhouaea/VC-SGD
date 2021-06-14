@@ -29,7 +29,7 @@ neural_network:
 seed: 99
 
 pascalvoc_metrics:
-  iou_threshold: 0.1
+  iou_threshold: 0.01
 
 
 # ********* Statistical Analysis Parameters *********
@@ -47,7 +47,10 @@ even_distribution: true
 dataset: 'pascalvoc'
 # 60000 for mnist, 16551 for pascalvoc
 num_training_data: 10
-num_val_loss: 5000
+num_val_train_data: 100
+num_test_data: 100
+test_and_val_train_batch_size: 10
+
 
 aggregation_method: 'simplemean' # simplemean, cgc
 attack: 'noattack'  # signflip, gaussian, bitflip, label, noattack
