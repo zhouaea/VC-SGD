@@ -323,4 +323,6 @@ def data_for_polygon(polygons):
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
+    print(len(train_label_bypolygon))
+    print(len(train_label_bypolygon[0]))
     return train_data_bypolygon, train_label_bypolygon
