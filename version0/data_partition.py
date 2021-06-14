@@ -16,6 +16,7 @@ from gluoncv.data.batchify import Tuple, Stack, Pad
 from gluoncv.data import VOCDetection
 from collections import defaultdict
 import copy
+import gc
 from sklearn.utils import shuffle
 from memory_profiler import profile
 
@@ -93,9 +94,9 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA,
-                                          shuffle=False,
-                                          batchify_fn=batchify_fn, last_batch='discard')
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(16551 / 4) + 1,
+                                          shuffle=True,
+                                          batchify_fn=batchify_fn, last_batch='keep')
 
     val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']), cfg['test_and_val_train_batch_size'],
 shuffle=False,
@@ -103,6 +104,13 @@ shuffle=False,
     val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(cfg['num_test_data']), cfg['test_and_val_train_batch_size'],
 shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep')
+
+    # Clean up unused datasets
+    del train_dataset
+    del val_train_dataset
+    del val_test_dataset
+    del batchify_fn
+    gc.collect()
 
 if cfg['write_cpu_and_memory']:
     with open(os.path.join('collected_results', 'computer_resource_percentages'),
@@ -114,11 +122,7 @@ if cfg['write_cpu_and_memory']:
     psutil.cpu_percent()
 
 if cfg['even_distribution']:
-    # X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
-    # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
-    for (X, y) in train_data:
-        X_first_half, y_first_half = X, y
-
+    pass
 else:
     # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
     # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
@@ -211,14 +215,29 @@ def data_for_polygon(polygons):
     if cfg['write_cpu_and_memory']:
         psutil.cpu_percent()
 
+    # Do not organize by classes, just divide entire dataset into tenths.
     if cfg['even_distribution']:
-        # Do not organize by classes, just divide entire dataset into tenths.
+        train_data = []
+        label_data = []
+
+        # The dataloader should have batches of 1/4 the full dataset.
+        # NOTE: X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
+        # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
+        for i, (X, y) in enumerate(train_data):
+            if i == 0:
+                X_quarter, y_quarter = X, y
+                # Hopefully these add the reference to the data and not the data itself
+                train_data.append(X_quarter)
+                label_data.append(y_quarter)
+
+        # In each quarter of the training and label data, put a tenth into each polygon
         for i in range(len(polygons)):
-            one_tenth_index = len(X_first_half) // 10
-            X_ = X_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
-            y_ = y_first_half[i * one_tenth_index:(i + 1) * one_tenth_index]
-            train_data_bypolygon.append(X_)
-            train_label_bypolygon.append(y_)
+            for j in range(len(train_data)):
+                one_tenth_index = len(train_data[j]) // 10 + 1
+                X_ = train_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]
+                y_ = label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]
+                train_data_bypolygon.append(X_)
+                train_label_bypolygon.append(y_)
     else:
         """
             Returns training data and labels for new epochs.
