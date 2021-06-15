@@ -46,20 +46,20 @@ def extract_batch_from_polygon(simulation, polygon_index):
     if cfg['dataset'] == 'pascalvoc':
         # We do not delete elements in the list because mxnet ndarrays do not have delete operations.
         # Storing slice references of the training data will suffice.
-        training_data_assigned = simulation.training_data_bypolygon[polygon_index][
+        training_data_assigned = simulation.image_data_bypolygon[polygon_index][
                                  simulation.current_batch_index_by_polygon[polygon_index] * BATCH_SIZE:(
                                                                                                                simulation.current_batch_index_by_polygon[
                                                                                                                    polygon_index] + 1) * BATCH_SIZE]
-        training_label_assigned = simulation.training_label_bypolygon[polygon_index][
+        training_label_assigned = simulation.label_data_bypolygon[polygon_index][
                                   simulation.current_batch_index_by_polygon[polygon_index] * BATCH_SIZE:(
                                                                                                                 simulation.current_batch_index_by_polygon[
                                                                                                                     polygon_index] + 1) * BATCH_SIZE]
         simulation.current_batch_index_by_polygon[polygon_index] += 1
     else:
-        training_data_assigned = simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-        del simulation.training_data_bypolygon[polygon_index][:BATCH_SIZE]
-        training_label_assigned = simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
-        del simulation.training_label_bypolygon[polygon_index][:BATCH_SIZE]
+        training_data_assigned = simulation.image_data_bypolygon[polygon_index][:BATCH_SIZE]
+        del simulation.image_data_bypolygon[polygon_index][:BATCH_SIZE]
+        training_label_assigned = simulation.label_data_bypolygon[polygon_index][:BATCH_SIZE]
+        del simulation.label_data_bypolygon[polygon_index][:BATCH_SIZE]
 
     return training_data_assigned, training_label_assigned
 
@@ -127,19 +127,19 @@ def simulate(simulation):
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    if ((any(len(x) >= BATCH_SIZE for x in simulation.training_data_bypolygon)) and (
+                    if ((any(len(x) >= BATCH_SIZE for x in simulation.image_data_bypolygon)) and (
                             cfg['dataset'] != 'pascalvoc')) or (
                                     (any((current_batch_index + 1) * BATCH_SIZE <= len(
-                                        simulation.training_data_bypolygon[i])
+                                        simulation.image_data_bypolygon[i])
                                          for i, current_batch_index in
                                          enumerate(simulation.current_batch_index_by_polygon))) and (
                             cfg['dataset'] == 'pascalvoc')):
                         # There is still enough data in this polygon.
                         if (cfg['dataset'] != 'pascalvoc' and
-                            len(simulation.training_data_bypolygon[polygon_index]) <= BATCH_SIZE) or (
+                            len(simulation.image_data_bypolygon[polygon_index]) <= BATCH_SIZE) or (
                                 cfg['dataset'] == 'pascalvoc' and (
                                 (simulation.current_batch_index_by_polygon[polygon_index] + 1) * BATCH_SIZE <= len(
-                            simulation.training_data_bypolygon[polygon_index]))):
+                            simulation.image_data_bypolygon[polygon_index]))):
 
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
@@ -166,7 +166,7 @@ def simulate(simulation):
                                                   simulation.running_time + float(timestep.attrib['time']))
                         epoch_runtime_start = time.time()
                         simulation.new_epoch()
-                        if len(simulation.training_data_bypolygon[polygon_index]) >= BATCH_SIZE:
+                        if len(simulation.image_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
                             vehi.training_data_assigned[polygon_index] = (

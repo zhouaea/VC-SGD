@@ -134,8 +134,8 @@ class Simulation:
         self.val_train_data = val_train_data
         self.val_test_data = val_test_data
         self.current_batch_index_by_polygon = [0 for i in range(len(polygons))]
-        self.training_data_bypolygon = []
-        self.training_label_bypolygon = []
+        self.image_data_bypolygon = []
+        self.label_data_bypolygon = []
         self.num_round = num_round
         self.running_time = 0
         if cfg['dataset'] == 'pascalvoc':
@@ -297,5 +297,5 @@ class Simulation:
         # for i, (data, label) in enumerate(self.training_set):
         #     self.training_data.append((data, label))
         print("partitioning data...")
-        self.training_data_bypolygon, self.training_label_bypolygon = data_for_polygon(self.polygons)
+        self.image_data_bypolygon, self.label_data_bypolygon = data_for_polygon(self.polygons)
         self.current_batch_index_by_polygon = [0 for i in range(len(self.polygons))]

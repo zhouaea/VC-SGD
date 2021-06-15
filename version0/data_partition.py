@@ -220,7 +220,7 @@ def data_for_polygon(polygons):
     NUM_POLYGONS = len(polygons)
     start = time.time()
     image_data_bypolygon = []
-    train_label_bypolygon = []
+    label_data_bypolygon = []
 
     if cfg['write_cpu_and_memory']:
         psutil.cpu_percent()
@@ -229,7 +229,7 @@ def data_for_polygon(polygons):
     if cfg['even_distribution']:
         # Create 10 separate lists to contain data for each polygon.
         image_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
-        train_label_bypolygon = [[] for i in range(NUM_POLYGONS)]
+        label_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
 
         # In each quarter of the image and label data, put a tenth into each polygon's list.
         for i, (X_quarter, y_quarter) in enumerate(train_data):
@@ -239,8 +239,10 @@ def data_for_polygon(polygons):
                     if k >= len(X_quarter):
                         break
                     image_data_bypolygon[j].append(X_quarter[k])
-                    train_label_bypolygon[j].append(y_quarter[k])
+                    label_data_bypolygon[j].append(y_quarter[k])
             print("quarter", i, "partitioned")
+
+        gc.collect()
 
     else:
         class_index = 0
@@ -304,14 +306,14 @@ def data_for_polygon(polygons):
             # necessary for pascalvoc. In addition, we no longer need to create extra np arrays.
             if cfg['dataset'] == 'pascalvoc':
                 train_data_bypolygon.append(X_new)
-                train_label_bypolygon.append(y_new)
+                label_data_bypolygon.append(y_new)
             else:
                 # Change X_new and y_new into numpy arrays instead of simple lists and have their contents shuffled.
                 X_new, y_new = shuffle(np.array(X_new), np.array(y_new))
 
                 # Each index of train_data_bypolygon and train_data_bypolygon correspond to a polygon.
                 train_data_bypolygon.append(X_new.tolist())
-                train_label_bypolygon.append(y_new.tolist())
+                label_data_bypolygon.append(y_new.tolist())
 
     end = time.time()
     if cfg['write_cpu_and_memory']:
@@ -320,7 +322,7 @@ def data_for_polygon(polygons):
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
-    print(len(train_label_bypolygon))
-    print(len(train_label_bypolygon[0]))
+    print(len(label_data_bypolygon))
+    print(len(label_data_bypolygon[0]))
 
-    return image_data_bypolygon, train_label_bypolygon
+    return image_data_bypolygon, label_data_bypolygon
