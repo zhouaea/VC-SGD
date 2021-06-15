@@ -238,14 +238,14 @@ def data_for_polygon(polygons):
         # In each quarter of the image and label data, put a tenth into each polygon.
         # TODO: iterate through each quarter first for better cache locality.
         for i in range(len(polygons)):
-            one_tenth_image_data = nd.zeros(((NUM_TRAINING_DATA // 4 + 1) // 10 + 1, 3, 320, 320))
-            one_tenth_label_data = nd.zeros((((NUM_TRAINING_DATA // 4) + 1) // 10 + 1, 4, 6))
+            one_tenth_image_data = []
+            one_tenth_label_data = []
             for j in range(len(image_data)):
                 one_tenth_index = len(image_data[j]) // 10 + 1
-                one_tenth_image_data = nd.concat(one_tenth_image_data, image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
-                one_tenth_label_data = nd.concat(one_tenth_label_data, label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
-            image_data_bypolygon.append(one_tenth_image_data)
-            train_label_bypolygon.append(one_tenth_label_data)
+                one_tenth_image_data.append(one_tenth_image_data, image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
+                one_tenth_label_data.append(one_tenth_label_data, label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
+            image_data_bypolygon.append(nd.array(one_tenth_image_data))
+            train_label_bypolygon.append(nd.array(one_tenth_label_data))
     else:
         class_index = 0
 
