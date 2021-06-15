@@ -228,10 +228,10 @@ def data_for_polygon(polygons):
         # The dataloader should have batches of 1/4 the full dataset.
         # NOTE: X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
         # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
-        for (X_quarter, y_quarter) in train_data:
+        for i, (X_quarter, y_quarter) in enumerate(train_data):
             image_data.append(X_quarter)
             label_data.append(y_quarter)
-            print("hello")
+            print("quarter", i, "loaded")
 
         print(len(image_data))
 
@@ -242,10 +242,12 @@ def data_for_polygon(polygons):
             one_tenth_label_data = []
             for j in range(len(image_data)):
                 one_tenth_index = len(image_data[j]) // 10 + 1
+                print(type(image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]))
                 one_tenth_image_data.append(image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
                 one_tenth_label_data.append(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
             image_data_bypolygon.append(nd.array(one_tenth_image_data))
             train_label_bypolygon.append(nd.array(one_tenth_label_data))
+            print("polygon", i, "loaded")
     else:
         class_index = 0
 
