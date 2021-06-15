@@ -222,27 +222,16 @@ def data_for_polygon(polygons):
 
     # Do not organize by classes, just divide entire dataset into tenths.
     if cfg['even_distribution']:
-        image_data = []
-        label_data = []
-
-        # The dataloader should have batches of 1/4 the full dataset.
-        # NOTE: X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
-        # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
-        for i, (X_quarter, y_quarter) in enumerate(train_data):
-            image_data.append(X_quarter)
-            label_data.append(y_quarter)
-            print("quarter", i, "loaded")
-
-        print(len(image_data))
-
+        # NOTE: The dataloader should have batches of 1/4 the full dataset.
+        #   X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
+        #   y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
         # In each quarter of the image and label data, put a tenth into each polygon.
-        # TODO: iterate through each quarter first for better cache locality.
-        for i in range(len(image_data)):
-            one_tenth_index = len(image_data[j]) // 10 + 1
+        for i, (X_quarter, y_quarter) in enumerate(train_data):
+            one_tenth_index = len(X_quarter) // 10 + 1
             for j in range(len(polygons)):
                 for k in range(j * one_tenth_index, (j + 1) * one_tenth_index):
-                    image_data_bypolygon[j].append(image_data[i][k])
-                    train_label_bypolygon[j].append(label_data[i][k])
+                    image_data_bypolygon[j].append(X_quarter[k])
+                    train_label_bypolygon[j].append(y_quarter[k])
             print("quarter", i, "partitioned")
 
     else:
