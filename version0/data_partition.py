@@ -98,7 +98,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA // 4 + 1,
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 4 + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -231,17 +231,24 @@ def data_for_polygon(polygons):
         image_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
         label_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
 
+        lists_in_polygon = 0
+        current_polygon = 0
+
         # In each quarter of the image and label data, put a tenth into each polygon's list.
         for i, (X_quarter, y_quarter) in enumerate(train_data):
-            one_tenth_index = len(X_quarter) // NUM_POLYGONS + 1
+            one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (len(X_quarter) % NUM_POLYGONS > 0) # round up if there is a decimal
             for j in range(NUM_POLYGONS):
-                for k in range(j * one_tenth_index, (j + 1) * one_tenth_index):
-                    if k >= len(X_quarter):
-                        break
-                    image_data_bypolygon[j].append(X_quarter[k])
-                    label_data_bypolygon[j].append(y_quarter[k])
-            print("quarter", i, "partitioned")
-
+                if lists_in_polygon == 4:
+                    print("polygon", current_polygon, "partitioned")
+                    lists_in_polygon = 0
+                    current_polygon += 1
+                image_data_bypolygon[current_polygon].append(X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+                label_data_bypolygon[current_polygon].append(y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+                lists_in_polygon += 1
+        print("polygons", len(image_data_bypolygon))
+        print("lists per polygon", len(image_data_bypolygon[0]))
+        print("image data per list", len(image_data_bypolygon[0][0]))
+        print("dimension of image", len(image_data_bypolygon[0][0][0]))
         gc.collect()
 
     else:
@@ -322,7 +329,5 @@ def data_for_polygon(polygons):
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
-    print(len(label_data_bypolygon))
-    print(len(label_data_bypolygon[0]))
 
     return image_data_bypolygon, label_data_bypolygon

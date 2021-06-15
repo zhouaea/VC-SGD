@@ -46,7 +46,7 @@ even_distribution: true
 # mnist, cifar10, pascalvoc
 dataset: 'pascalvoc'
 # 60000 for mnist, 16551 for pascalvoc
-num_training_data: 10
+num_training_data: 80
 num_val_train_data: 100
 num_test_data: 100
 test_and_val_train_batch_size: 10
