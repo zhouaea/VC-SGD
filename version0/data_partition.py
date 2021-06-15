@@ -242,7 +242,7 @@ def data_for_polygon(polygons):
             one_tenth_label_data = []
             for j in range(len(image_data)):
                 one_tenth_index = len(image_data[j]) // 10 + 1
-                for k in image_data[j]:
+                for k in range(image_data[j]):
                     one_tenth_image_data.append(image_data[j][k])
                     one_tenth_label_data.append(label_data[j][k])
             image_data_bypolygon.append(one_tenth_image_data)
