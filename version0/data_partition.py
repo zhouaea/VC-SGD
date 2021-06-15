@@ -245,8 +245,8 @@ def data_for_polygon(polygons):
                 print(type(image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]))
                 one_tenth_image_data.append(image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
                 one_tenth_label_data.append(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
-            image_data_bypolygon.append(nd.array(np.array(one_tenth_image_data, dim=0)))
-            train_label_bypolygon.append(nd.array(np.array(one_tenth_label_data, dim=0)))
+            image_data_bypolygon.append(nd.array(np.array(one_tenth_image_data)))
+            train_label_bypolygon.append(nd.array(np.array(one_tenth_label_data)))
             print("polygon", i, "loaded")
     else:
         class_index = 0
