@@ -242,11 +242,11 @@ def data_for_polygon(polygons):
             one_tenth_label_data = []
             for j in range(len(image_data)):
                 one_tenth_index = len(image_data[j]) // 10 + 1
-                print(type(image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index]))
-                one_tenth_image_data.append(image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
-                one_tenth_label_data.append(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
-            image_data_bypolygon.append(nd.array(np.array(one_tenth_image_data)))
-            train_label_bypolygon.append(nd.array(np.array(one_tenth_label_data)))
+                for k in image_data[j]:
+                    one_tenth_image_data.append(image_data[j][k])
+                    one_tenth_label_data.append(label_data[j][k])
+            image_data_bypolygon.append(one_tenth_image_data)
+            train_label_bypolygon.append(one_tenth_label_data)
             print("polygon", i, "loaded")
     else:
         class_index = 0
@@ -328,5 +328,5 @@ def data_for_polygon(polygons):
     print('Time to partition all training data into polygons:', end - start)
     print(len(train_label_bypolygon))
     print(len(train_label_bypolygon[0]))
-    exit()
+
     return image_data_bypolygon, train_label_bypolygon
