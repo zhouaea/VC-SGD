@@ -236,7 +236,7 @@ def data_for_polygon(polygons):
             one_tenth_index = len(X_quarter) // NUM_POLYGONS + 1
             for j in range(NUM_POLYGONS):
                 for k in range(j * one_tenth_index, (j + 1) * one_tenth_index):
-                    if j >= len(X_quarter):
+                    if k >= len(X_quarter):
                         break
                     image_data_bypolygon[j].append(X_quarter[k])
                     train_label_bypolygon[j].append(y_quarter[k])
