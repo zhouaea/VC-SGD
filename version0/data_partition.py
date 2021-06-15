@@ -237,17 +237,14 @@ def data_for_polygon(polygons):
 
         # In each quarter of the image and label data, put a tenth into each polygon.
         # TODO: iterate through each quarter first for better cache locality.
-        for i in range(len(polygons)):
-            one_tenth_image_data = []
-            one_tenth_label_data = []
-            for j in range(len(image_data)):
-                one_tenth_index = len(image_data[j]) // 10 + 1
-                for k in range(image_data[j]):
-                    one_tenth_image_data.append(image_data[j][k])
-                    one_tenth_label_data.append(label_data[j][k])
-            image_data_bypolygon.append(one_tenth_image_data)
-            train_label_bypolygon.append(one_tenth_label_data)
-            print("polygon", i, "loaded")
+        for i in range(len(image_data)):
+            one_tenth_index = len(image_data[j]) // 10 + 1
+            for j in range(len(polygons)):
+                for k in range(j * one_tenth_index, (j + 1) * one_tenth_index):
+                    image_data_bypolygon[j].append(image_data[i][k])
+                    train_label_bypolygon[j].append(label_data[i][k])
+            print("quarter", i, "partitioned")
+
     else:
         class_index = 0
 
