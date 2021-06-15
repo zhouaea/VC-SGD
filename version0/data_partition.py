@@ -242,8 +242,8 @@ def data_for_polygon(polygons):
             one_tenth_label_data = []
             for j in range(len(image_data)):
                 one_tenth_index = len(image_data[j]) // 10 + 1
-                one_tenth_image_data.append(one_tenth_image_data, image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
-                one_tenth_label_data.append(one_tenth_label_data, label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
+                one_tenth_image_data.append(one_tenth_image_data, image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
+                one_tenth_label_data.append(one_tenth_label_data, label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index])
             image_data_bypolygon.append(nd.array(one_tenth_image_data))
             train_label_bypolygon.append(nd.array(one_tenth_label_data))
     else:

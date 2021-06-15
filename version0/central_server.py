@@ -296,5 +296,6 @@ class Simulation:
         self.num_epoch += 1
         # for i, (data, label) in enumerate(self.training_set):
         #     self.training_data.append((data, label))
+        print("partitioning data...")
         self.training_data_bypolygon, self.training_label_bypolygon = data_for_polygon(self.polygons)
         self.current_batch_index_by_polygon = [0 for i in range(len(self.polygons))]
