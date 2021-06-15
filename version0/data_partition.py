@@ -94,7 +94,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(16551 / 4) + 1,
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA // 4 + 1,
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -214,7 +214,7 @@ def data_for_polygon(polygons):
         Returns training data and labels for new epochs.
     """
     start = time.time()
-    train_data_bypolygon = []
+    image_data_bypolygon = []
     train_label_bypolygon = []
 
     if cfg['write_cpu_and_memory']:
@@ -222,28 +222,29 @@ def data_for_polygon(polygons):
 
     # Do not organize by classes, just divide entire dataset into tenths.
     if cfg['even_distribution']:
-        train_data = []
+        image_data = []
         label_data = []
 
         # The dataloader should have batches of 1/4 the full dataset.
         # NOTE: X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
         # y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
-        for i, (X, y) in enumerate(train_data):
-            X_quarter, y_quarter = X, y
-            # Hopefully these add the reference to the data and not the data itself
-            train_data.append(X_quarter)
+        for (X_quarter, y_quarter) in train_data:
+            image_data.append(X_quarter)
             label_data.append(y_quarter)
+            print("hello")
 
-        # In each quarter of the training and label data, put a tenth into each polygon
+        print(len(image_data))
+
+        # In each quarter of the image and label data, put a tenth into each polygon.
         # TODO: iterate through each quarter first for better cache locality.
         for i in range(len(polygons)):
-            one_tenth_train_data = nd.array([])
-            one_tenth_label_data = nd.array([])
-            for j in range(len(train_data)):
-                one_tenth_index = len(train_data[j]) // 10 + 1
-                one_tenth_train_data.concat(train_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
-                one_tenth_label_data.concat(label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
-            train_data_bypolygon.append(one_tenth_train_data)
+            one_tenth_image_data = nd.zeros(((NUM_TRAINING_DATA // 4 + 1) // 10 + 1, 3, 320, 320))
+            one_tenth_label_data = nd.zeros((((NUM_TRAINING_DATA // 4) + 1) // 10 + 1, 4, 6))
+            for j in range(len(image_data)):
+                one_tenth_index = len(image_data[j]) // 10 + 1
+                one_tenth_image_data = nd.concat(one_tenth_image_data, image_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
+                one_tenth_label_data = nd.concat(one_tenth_label_data, label_data[j][i * one_tenth_index:(i + 1) * one_tenth_index], dim=0)
+            image_data_bypolygon.append(one_tenth_image_data)
             train_label_bypolygon.append(one_tenth_label_data)
     else:
         class_index = 0
@@ -325,4 +326,5 @@ def data_for_polygon(polygons):
     print('Time to partition all training data into polygons:', end - start)
     print(len(train_label_bypolygon))
     print(len(train_label_bypolygon[0]))
-    return train_data_bypolygon, train_label_bypolygon
+    exit()
+    return image_data_bypolygon, train_label_bypolygon
