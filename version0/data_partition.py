@@ -69,8 +69,12 @@ elif cfg['dataset'] == 'pascalvoc':
         psutil.cpu_percent()
 
     # Typically we use 2007+2012 trainval splits for training data.
-    # Note that originally the training and label data are numpy ndarrays but are converted to mxnet ndarrays
-    # when they are passed into the dataloader.
+    # NOTES: 
+    #   - Originally the training and label data are numpy ndarrays but are converted to mxnet ndarrays
+    #   when they are passed into the dataloader.
+    #   - The dataloader should have batches of 1/4 the full dataset.
+    #   - X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
+    #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     print('loading training dataset...')
     train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
@@ -213,6 +217,7 @@ def data_for_polygon(polygons):
     """
         Returns training data and labels for new epochs.
     """
+    NUM_POLYGONS = len(polygons)
     start = time.time()
     image_data_bypolygon = []
     train_label_bypolygon = []
@@ -222,13 +227,14 @@ def data_for_polygon(polygons):
 
     # Do not organize by classes, just divide entire dataset into tenths.
     if cfg['even_distribution']:
-        # NOTE: The dataloader should have batches of 1/4 the full dataset.
-        #   X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
-        #   y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
-        # In each quarter of the image and label data, put a tenth into each polygon.
+        # Create 10 separate lists to contain data for each polygon.
+        image_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
+        train_label_bypolygon = [[] for i in range(NUM_POLYGONS)]
+
+        # In each quarter of the image and label data, put a tenth into each polygon's list.
         for i, (X_quarter, y_quarter) in enumerate(train_data):
-            one_tenth_index = len(X_quarter) // 10 + 1
-            for j in range(len(polygons)):
+            one_tenth_index = len(X_quarter) // NUM_POLYGONS + 1
+            for j in range(NUM_POLYGONS):
                 for k in range(j * one_tenth_index, (j + 1) * one_tenth_index):
                     image_data_bypolygon[j].append(X_quarter[k])
                     train_label_bypolygon[j].append(y_quarter[k])
@@ -238,7 +244,7 @@ def data_for_polygon(polygons):
         class_index = 0
 
         # Determine how to split the first 50% of the data into polygons
-        random_len = len(X_first_half) // len(polygons) + 1
+        random_len = len(X_first_half) // NUM_POLYGONS + 1
 
         # Prepare the second half of data into a list where indices correspond to a class index.
         if cfg['dataset'] == 'pascalvoc':
@@ -256,7 +262,7 @@ def data_for_polygon(polygons):
         else:
             train_data_list = list(train_data_byclass.values())
 
-        for i in range(len(polygons)):
+        for i in range(NUM_POLYGONS):
             # Take a 10th (if there are 10 polygons) of the non-partitioned randomly shuffled data and labels.
             X_ = X_first_half[i * random_len:(i + 1) * random_len]
             y_ = y_first_half[i * random_len:(i + 1) * random_len]
@@ -268,14 +274,14 @@ def data_for_polygon(polygons):
 
                 # Add images and labels of a single class or multiple classes (if there are more classes than polygons, like in pascal voc)
                 # into temporary lists.
-                for j in range(len(train_data_list) // len(polygons)):
+                for j in range(len(train_data_list) // NUM_POLYGONS):
                     temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
                     temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
                     class_index += 1
 
                 # If the number of classes does not divide evenly among polygons, add the images and labels corresponding to the
                 # remaining classes to the last polygon's training and label data.
-                if i == len(polygons) - 1:
+                if i == NUM_POLYGONS - 1:
                     while class_index < len(train_data_list) - 1:
                         temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
                         temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
