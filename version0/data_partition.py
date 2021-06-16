@@ -31,8 +31,8 @@ def transform(data, label):
         label = label_bbox_resize(label, in_size=(w, h),
                                   out_size=(cfg['neural_network']['width'], cfg['neural_network']['height']))
         label = label.astype(np.float32)
-        # Pad to 56 objects, better to do it here than to pad with an ndarray according to documentation.
-        np.pad(label, (0, 56 - len(label)), 'constant', constant_values=(-1, -1))
+        # Pad to 56 objects, better to do it here than to pad with an ndarray according to the documentation.
+        label = np.pad(label, ((0, 56 - len(label)), (0, 0)), 'constant', constant_values=-1)
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
         data = mx.nd.transpose(data, (2, 0, 1))
     data = data.astype(np.float32) / 255
@@ -275,7 +275,7 @@ def data_for_polygon(polygons):
                 # must convert our list of ndarrays into an ndarray of ndarrays.
                 if len(image_data_byclass[i]) != 0:
                     temp_nd_image_data = nd.concat(*image_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0)
-                    temp_nd_label_data = nd.concat(*label_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0)
+                    temp_nd_label_data = nd.concat(*label_data_byclass[i], num_args=len(label_data_byclass[i]), dim=0)
                     print(temp_nd_image_data.shape)
                     print(temp_nd_label_data.shape)
                     image_data_bypolygon[current_polygon].append(temp_nd_image_data)
@@ -310,5 +310,4 @@ def data_for_polygon(polygons):
     print("lists per polygon", len(image_data_bypolygon[0]))
     print("image data per list", len(image_data_bypolygon[0][0]))
     print("dimension of image", len(image_data_bypolygon[0][0][0]))
-    exit()
     return image_data_bypolygon, label_data_bypolygon
