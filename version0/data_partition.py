@@ -31,6 +31,8 @@ def transform(data, label):
         label = label_bbox_resize(label, in_size=(w, h),
                                   out_size=(cfg['neural_network']['width'], cfg['neural_network']['height']))
         label = label.astype(np.float32)
+        # Pad to 56 objects, better to do it here than to pad with an ndarray according to documentation.
+        np.pad(label, (0, 56 - len(label)), 'constant', constant_values=(-1, -1))
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
         data = mx.nd.transpose(data, (2, 0, 1))
     data = data.astype(np.float32) / 255
@@ -98,7 +100,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), 5000, # round up if there is a decimal
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 4 + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -128,16 +130,7 @@ if cfg['even_distribution']:
     pass
 else:
     if cfg['dataset'] == 'pascalvoc':
-        highest = 0
-        for (_, label_batch) in train_data:
-            # Data and labels are initially mxnet nd arrays, but the data becomes a list of numpy nd arrays and the label
-            # becomes a list of numpy int32.
-            for label in label_batch:
-                if len(label) > highest:
-                    highest = label(len)
-
-        print(highest)
-        exit()
+        pass
     else:
         for (X, y) in train_data:
             # Data and labels are initially mxnet nd arrays, but the data becomes a list of numpy nd arrays and the label

@@ -40,36 +40,30 @@ file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
+
 def extract_batch_from_polygon(simulation, polygon_index):
-    # For the pascalvoc dataset, automatically batch training data for each vehicle
-    # WARNING: This function will break if the first list in a polygon has less data than the batch size.
+    # For readability.
+    current_list_index = simulation.current_list_index_by_polygon[polygon_index]
+    current_batch_index = simulation.current_batch_index_by_polygon[polygon_index]
+
+    # WARNING: This function will not distribute data if the lists have less data than the batch size.
+    #   Divide the entire dataset by 10, and then by 4, to know how much data is in each list.
     if cfg['dataset'] == 'pascalvoc':
         # We do not delete elements in the list because mxnet ndarrays do not have delete operations.
         # Storing slice references of the training data will suffice.
-        training_data_assigned = simulation.image_data_bypolygon[polygon_index][
-                                     simulation.current_list_index_by_polygon[polygon_index]][
-                                 simulation.current_batch_index_by_polygon[polygon_index] * BATCH_SIZE:(
-                                                                                                               simulation.current_batch_index_by_polygon[
-                                                                                                                   polygon_index] + 1) * BATCH_SIZE]
-        training_label_assigned = simulation.label_data_bypolygon[polygon_index][
-                                      simulation.current_list_index_by_polygon[polygon_index]][
-                                  simulation.current_batch_index_by_polygon[polygon_index] * BATCH_SIZE:(
-                                                                                                                simulation.current_batch_index_by_polygon[
-                                                                                                                    polygon_index] + 1) * BATCH_SIZE]
+        training_data_assigned = simulation.image_data_bypolygon[polygon_index][current_list_index][
+                                 current_batch_index * BATCH_SIZE:(current_batch_index + 1) * BATCH_SIZE]
+        training_label_assigned = simulation.label_data_bypolygon[polygon_index][current_list_index][
+                                  current_batch_index * BATCH_SIZE:(current_batch_index + 1) * BATCH_SIZE]
+        print('batch distributed')
         simulation.current_batch_index_by_polygon[polygon_index] += 1
+        current_batch_index = simulation.current_batch_index_by_polygon[polygon_index]
 
         # If there is not enough space in the current list of the polygon for another batch, 
         # go to the next list in the polygon, if it exists.
-        if (simulation.current_batch_index_by_polygon[polygon_index] + 1) * BATCH_SIZE >= len(
-                simulation.image_data_bypolygon[polygon_index][simulation.current_list_index_by_polygon[polygon_index]]):
+        if (current_batch_index + 1) * BATCH_SIZE > len(simulation.image_data_bypolygon[polygon_index][current_list_index]):
             simulation.current_batch_index_by_polygon[polygon_index] = 0
             simulation.current_list_index_by_polygon[polygon_index] += 1
-
-            # If the next list exists, check if the next list has enough space for a batch size. If not, skip the list.
-            # This guarantees that a valid list will have at least one batch.
-            while simulation.current_list_index_by_polygon[polygon_index] < 4 and len(simulation.image_data_bypolygon[polygon_index][simulation.current_list_index_by_polygon[polygon_index]]) < BATCH_SIZE:
-                print("next list does not have enough space for a batch size")
-                simulation.current_list_index_by_polygon[polygon_index] += 1
 
     else:
         training_data_assigned = simulation.image_data_bypolygon[polygon_index][:BATCH_SIZE]
@@ -146,14 +140,16 @@ def simulate(simulation):
                     # size, discard them.
                     if ((any(len(x) >= BATCH_SIZE for x in simulation.image_data_bypolygon)) and (
                             cfg['dataset'] != 'pascalvoc')) or (
-                            (any(x < 4 for x in simulation.current_list_index_by_polygon)) and ( # A polygon still has data if its current list index is less than 4
-                            cfg['dataset'] == 'pascalvoc')):
+                            (any(x < len(simulation.image_data_bypolygon[polygon_index]) for i, x in
+                                 enumerate(simulation.current_list_index_by_polygon))) and (
+                                    cfg['dataset'] == 'pascalvoc')):  # If any list index is less than the length of its corresponding polygon list, there is still data.
 
                         # There is still enough data in this polygon.
                         if (cfg['dataset'] != 'pascalvoc' and
                             len(simulation.image_data_bypolygon[polygon_index]) <= BATCH_SIZE) or (
-                                cfg['dataset'] == 'pascalvoc' and (
-                               simulation.current_list_index_by_polygon[polygon_index] < 4)):
+                                (simulation.current_list_index_by_polygon[polygon_index] < len(
+                                    simulation.image_data_bypolygon[polygon_index]))
+                                and cfg['dataset'] == 'pascalvoc'):  # If the current list index for the polygon is less than the number of lists in the polygon, there is still data.
 
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
