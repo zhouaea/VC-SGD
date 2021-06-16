@@ -98,7 +98,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 4 + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), 5000, # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -124,28 +124,20 @@ if cfg['write_cpu_and_memory']:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
 
-if cfg['write_cpu_and_memory']:
-    psutil.cpu_percent()
-
 if cfg['even_distribution']:
     pass
 else:
-    # There is too much data in the labels and images of pascalvoc to create a tensor in (N, data, label) format.
-    # In this case the dimensions are (1, 16551, 16551). I am going to split training data into 8 batches but still
-    # split the batches into two halves.
     if cfg['dataset'] == 'pascalvoc':
-        # For partitioning small subset of data.
-        for (X, y) in train_data:
+        highest = 0
+        for (_, label_batch) in train_data:
             # Data and labels are initially mxnet nd arrays, but the data becomes a list of numpy nd arrays and the label
-            # becomes a list of numpy nd arrays.
-            X = list(X.asnumpy())
-            y = list(y.asnumpy())
-            # for random
-            X_first_half = X[:int(len(X) / 2)]
-            y_first_half = y[:int(len(y) / 2)]
-            # for byclass
-            X_second_half = X[int(len(X) / 2):]
-            y_second_half = y[int(len(y) / 2):]
+            # becomes a list of numpy int32.
+            for label in label_batch:
+                if len(label) > highest:
+                    highest = label(len)
+
+        print(highest)
+        exit()
     else:
         for (X, y) in train_data:
             # Data and labels are initially mxnet nd arrays, but the data becomes a list of numpy nd arrays and the label
@@ -159,58 +151,15 @@ else:
             X_second_half = X[int(len(X) / 2):]
             y_second_half = y[int(len(y) / 2):]
 
-    if cfg['write_cpu_and_memory']:
-        with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                  mode='a') as f:
-            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-
     # Partition second_half image and label data into different classes.
-    if cfg['write_cpu_and_memory']:
-        psutil.cpu_percent()
     if cfg['dataset'] == 'pascalvoc':
-        train_data_byclass = defaultdict(lambda: ([], []))
-        # For every image and label in the second half of the dataset, add them to lists in the dictionary keys that correspond with
-        # each class index of each object in the datum. There will be duplicate images in the dictionary if an image has multiple objects.
-        for j in range(len(X_second_half)):
-            # Each pascal voc label is an n x 6 ndarray. There are n objects in each datum and the 5th column
-            # has the class index for each object.
-            potential_class_indices = []
-            # Store all class indices found in the training data.
-            for k in range(len(y_second_half[j])):
-                # If there are no more valid objects go to the next image label.
-                if y_second_half[j][k][4] == -1:
-                    break
-                potential_class_indices.append(y_second_half[j][k][4])
-
-            # Access the key of the dict correlating to a random class index found in the training data.
-            # The corresponding value contains a tuple with two lists.
-            random_class_index = np.random.randint(len(potential_class_indices))
-            train_data_byclass[potential_class_indices[random_class_index]][0].append(X_second_half[j])
-            train_data_byclass[potential_class_indices[random_class_index]][1].append(y_second_half[j])
+        pass
     else:
         train_data_byclass = defaultdict(list)
         # For every image in the second half of the dataset, add it to a list in the dictionary key that corresponds with
         # its class index.
         for j in range(len(X_second_half)):
             train_data_byclass[y_second_half[j]].append(X_second_half[j])
-
-    end = time.time()
-    if cfg['write_cpu_and_memory']:
-        with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                  mode='a') as f:
-            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-
-    print('Time to partition half of training data into classes:', end - start)
-
-    # Print statistics on data in each class.
-    if cfg['dataset'] == 'pascalvoc':
-        data_per_class = {}
-        for object_class, (data, label) in sorted(train_data_byclass.items()):
-            print(object_class, len(data), len(label), end=" | ")
-        print("Number of classes: ", len(train_data_byclass.values()))
-
 
 @profile
 def data_for_polygon(polygons):
@@ -245,82 +194,116 @@ def data_for_polygon(polygons):
                 image_data_bypolygon[current_polygon].append(X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                 label_data_bypolygon[current_polygon].append(y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                 lists_in_polygon += 1
-        print("polygons", len(image_data_bypolygon))
-        print("lists per polygon", len(image_data_bypolygon[0]))
-        print("image data per list", len(image_data_bypolygon[0][0]))
-        print("dimension of image", len(image_data_bypolygon[0][0][0]))
         gc.collect()
 
     else:
-        class_index = 0
-
-        # Determine how to split the first 50% of the data into polygons
-        random_len = len(X_first_half) // NUM_POLYGONS + 1
-
-        # Prepare the second half of data into a list where indices correspond to a class index.
         if cfg['dataset'] == 'pascalvoc':
-            # Create a list of list of images where each list of images corresponds to a class index. The list index
-            # will correspond to the order in which the keys were added to the dictionary.
-            # Ex 1: For MNIST, train_data_list[0][0] would access the first image (1x28x28 numpy.ndarray) that depicts whichever
-            # key was added first into train_data_byclass.
-            # Ex 2: For pascalvoc, train_data_list[0][0] would access the first image (3x416x416 numpy.ndarray) that depicts
-            # whichever key was added first into train_databyclass.
-            train_data_list = [v for (k, v) in sorted(train_data_byclass.items())]
+            image_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
+            label_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
 
-            # Create a shuffled list of class indices to randomly assign classes to polygons.
-            class_index_ordering = [i for i in range(len(train_data_list))]
-            random.shuffle(class_index_ordering)
-        else:
-            train_data_list = list(train_data_byclass.values())
+            # Create lists to store data by pascalvoc classes.
+            image_data_byclass = [[] for i in range(20)]
+            label_data_byclass = [[] for i in range(20)]
 
-        for i in range(NUM_POLYGONS):
-            # Take a 10th (if there are 10 polygons) of the non-partitioned randomly shuffled data and labels.
-            X_ = X_first_half[i * random_len:(i + 1) * random_len]
-            y_ = y_first_half[i * random_len:(i + 1) * random_len]
-            X_new = copy.deepcopy(X_)
-            y_new = copy.deepcopy(y_)
+            lists_in_polygon = 0
+            current_polygon = 0
+
+            for i, (X_quarter, y_quarter) in enumerate(train_data):
+                # Assign half of data ("random data") to polygons (two lists per polygon)
+                if i < 2:
+                    one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
+                                len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
+                    # Divide the quarters into tenths, add two tenths to every polygon
+                    for j in range(NUM_POLYGONS):
+                        if lists_in_polygon == 2:
+                            print("polygon", current_polygon, "random half partitioned")
+                            lists_in_polygon = 0
+                            current_polygon += 1
+                        image_data_bypolygon[current_polygon].append(
+                            X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+                        label_data_bypolygon[current_polygon].append(
+                            y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+                        lists_in_polygon += 1
+                # Sort half of data by class, to assign to polygons later.
+                else:
+                    # Measure performance.
+                    if i == 2:
+                        start = time.time()
+                        if cfg['write_cpu_and_memory']:
+                            psutil.cpu_percent()
+
+                    # Iterate through each individual element of the batch.
+                    for j in range(len(X_quarter)):
+                        # Each pascal voc label is an n x 6 ndarray. There are n objects in each datum and the 5th column
+                        # has the class index for each object.
+                        potential_class_indices = []
+                        # Store all class indices found in the training data.
+                        for k in range(len(y_quarter[j])):
+                            # If there are no more valid objects go to the next image label.
+                            if y_quarter[j][k][4] == -1:
+                                break
+                            potential_class_indices.append(int(y_quarter[j][k][4].asscalar()))
+                        # Access the list cell corresponding to a random class index found in the training data.
+                        random_class_index = np.random.randint(len(potential_class_indices))
+
+                        # Add the datum to a randomly chosen object class that it contains.
+                        # Note: We must add an extra dimension to each datum so we concatenate by batch later.
+                        image_data_byclass[potential_class_indices[random_class_index]].append(nd.expand_dims(X_quarter[j], axis=0))
+                        label_data_byclass[potential_class_indices[random_class_index]].append(nd.expand_dims(y_quarter[j], axis=0))
+
+            # Measure performance of partitioning data into classes
+            end = time.time()
+            if cfg['write_cpu_and_memory']:
+                with open(os.path.join('collected_results', 'computer_resource_percentages'),
+                          mode='a') as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
+            print('Time to partition half of training data into classes:', end - start)
+
+            # Print statistics on amount of data in each class.
             if cfg['dataset'] == 'pascalvoc':
-                temp_train_data_byclass = []
-                temp_label_data_byclass = []
+                for i, class_data in enumerate(image_data_byclass):
+                    print(i, len(class_data), end=" | ")
+            print()
 
-                # Add images and labels of a single class or multiple classes (if there are more classes than polygons, like in pascal voc)
-                # into temporary lists.
-                for j in range(len(train_data_list) // NUM_POLYGONS):
-                    temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
-                    temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
-                    class_index += 1
+            # Add data from two random classes to each polygon (in the form of two lists).
+            random_class_indices = [i for i in range(20)]
+            random.shuffle(random_class_indices)
 
-                # If the number of classes does not divide evenly among polygons, add the images and labels corresponding to the
-                # remaining classes to the last polygon's training and label data.
-                if i == NUM_POLYGONS - 1:
-                    while class_index < len(train_data_list) - 1:
-                        temp_train_data_byclass.extend(train_data_list[class_index_ordering[class_index]][0])
-                        temp_label_data_byclass.extend(train_data_list[class_index_ordering[class_index]][1])
-                        class_index += 1
+            lists_in_polygon = 0
+            current_polygon = 0
 
-                # Add temporary list to a list that corresponds with data in a single polygon.
-                X_new.extend(temp_train_data_byclass)
-                # Add temporary list to a list that corresponds with labels in a single polygon
-                y_new.extend(temp_label_data_byclass)
-            else:
+            for i in random_class_indices:
+                if lists_in_polygon == 2:
+                    print("polygon", current_polygon, "class half partitioned")
+                    lists_in_polygon = 0
+                    current_polygon += 1
+                # Note that it is important that the polygon lists are ndarrays. Thus, we
+                # must convert our list of ndarrays into an ndarray of ndarrays.
+                if len(image_data_byclass[i]) != 0:
+                    temp_nd_image_data = nd.concat(*image_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0)
+                    temp_nd_label_data = nd.concat(*label_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0)
+                    print(temp_nd_image_data.shape)
+                    print(temp_nd_label_data.shape)
+                    image_data_bypolygon[current_polygon].append(temp_nd_image_data)
+                    label_data_bypolygon[current_polygon].append(temp_nd_label_data)
+                lists_in_polygon += 1
+
+        else:
+            random_len = len(X_first_half) // len(polygons) + 1
+
+            for i in range(len(polygons)):
+                X_ = X_first_half[i * random_len:(i + 1) * random_len]
+                y_ = y_first_half[i * random_len:(i + 1) * random_len]
+                X_new = copy.deepcopy(X_)
+                y_new = copy.deepcopy(y_)
                 train_data_list = list(train_data_byclass.values())
                 X_new.extend(train_data_list[i])
                 y_new.extend([list(train_data_byclass.keys())[i] for _ in range(len(train_data_list[i]))])
-
-            # For pascalvoc, the contents of the training dataset are shuffled in the dataloader, so the first half of the
-            # dataset will be completely random. The second half of the shuffled data will semi-randomly be organized into
-            # classes,and then the classes are randomly split among the polygons. Therefore, an extra shuffle is not
-            # necessary for pascalvoc. In addition, we no longer need to create extra np arrays.
-            if cfg['dataset'] == 'pascalvoc':
-                train_data_bypolygon.append(X_new)
-                label_data_bypolygon.append(y_new)
-            else:
-                # Change X_new and y_new into numpy arrays instead of simple lists and have their contents shuffled.
                 X_new, y_new = shuffle(np.array(X_new), np.array(y_new))
-
-                # Each index of train_data_bypolygon and train_data_bypolygon correspond to a polygon.
-                train_data_bypolygon.append(X_new.tolist())
+                image_data_bypolygon.append(X_new.tolist())
                 label_data_bypolygon.append(y_new.tolist())
+
 
     end = time.time()
     if cfg['write_cpu_and_memory']:
@@ -330,4 +313,9 @@ def data_for_polygon(polygons):
             writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
 
+    print("polygons", len(image_data_bypolygon))
+    print("lists per polygon", len(image_data_bypolygon[0]))
+    print("image data per list", len(image_data_bypolygon[0][0]))
+    print("dimension of image", len(image_data_bypolygon[0][0][0]))
+    exit()
     return image_data_bypolygon, label_data_bypolygon
