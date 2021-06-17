@@ -100,7 +100,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 4 + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 8 + (NUM_TRAINING_DATA % 8 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -205,9 +205,9 @@ def data_for_polygon(polygons):
                 if i < 2:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
                                 len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
-                    # Divide the quarters into tenths, add two tenths to every polygon
+                    # Divide the eighths into tenths, add four tenths to every polygon
                     for j in range(NUM_POLYGONS):
-                        if lists_in_polygon == 2:
+                        if lists_in_polygon == 4:
                             print("polygon", current_polygon, "random half partitioned")
                             lists_in_polygon = 0
                             current_polygon += 1
@@ -219,7 +219,7 @@ def data_for_polygon(polygons):
                 # Sort half of data by class, to assign to polygons later.
                 else:
                     # Measure performance.
-                    if i == 2:
+                    if i == 4:
                         start = time.time()
                         if cfg['write_cpu_and_memory']:
                             psutil.cpu_percent()
@@ -266,7 +266,7 @@ def data_for_polygon(polygons):
             current_polygon = 0
 
             for i in random_class_indices:
-                if lists_in_polygon == 2:
+                if lists_in_polygon == 4:
                     print("polygon", current_polygon, "class half partitioned")
                     lists_in_polygon = 0
                     current_polygon += 1
