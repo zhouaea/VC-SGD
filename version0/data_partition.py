@@ -100,7 +100,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 8 + (NUM_TRAINING_DATA % 8 > 0), # round up if there is a decimal
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 16 + (NUM_TRAINING_DATA % 16 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -180,7 +180,7 @@ def data_for_polygon(polygons):
         for i, (X_quarter, y_quarter) in enumerate(train_data):
             one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (len(X_quarter) % NUM_POLYGONS > 0) # round up if there is a decimal
             for j in range(NUM_POLYGONS):
-                if lists_in_polygon == 4:
+                if lists_in_polygon == 8:
                     print("polygon", current_polygon, "partitioned")
                     lists_in_polygon = 0
                     current_polygon += 1
@@ -207,7 +207,7 @@ def data_for_polygon(polygons):
                                 len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
                     # Divide the eighths into tenths, add four tenths to every polygon
                     for j in range(NUM_POLYGONS):
-                        if lists_in_polygon == 4:
+                        if lists_in_polygon == 8:
                             print("polygon", current_polygon, "random half partitioned")
                             lists_in_polygon = 0
                             current_polygon += 1
