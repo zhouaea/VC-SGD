@@ -100,8 +100,6 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    batch = int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0)
-    print(batch)
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
@@ -203,9 +201,6 @@ def data_for_polygon(polygons):
             current_polygon = 0
 
             for i, (X_quarter, y_quarter) in enumerate(train_data):
-                print(X_quarter.shape)
-                print(y_quarter.shape)
-                exit()
                 # Assign half of data ("random data") to polygons (two lists per polygon)
                 if i < 2:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
