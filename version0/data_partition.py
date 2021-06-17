@@ -274,13 +274,15 @@ def data_for_polygon(polygons):
                 # Note that it is important that the polygon lists are ndarrays. Thus, we
                 # must convert our list of ndarrays into an ndarray of ndarrays.
                 if len(image_data_byclass[i]) != 0:
-                    temp_nd_image_data = nd.concat(*image_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0)
-                    temp_nd_label_data = nd.concat(*label_data_byclass[i], num_args=len(label_data_byclass[i]), dim=0)
-                    print(temp_nd_image_data.shape)
-                    print(temp_nd_label_data.shape)
-                    image_data_bypolygon[current_polygon].append(temp_nd_image_data)
-                    label_data_bypolygon[current_polygon].append(temp_nd_label_data)
+                    image_data_bypolygon[current_polygon].append(nd.concat(*image_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0))
+                    label_data_bypolygon[current_polygon].append(nd.concat(*label_data_byclass[i], num_args=len(label_data_byclass[i]), dim=0))
                 lists_in_polygon += 1
+
+            # Combine lists in each polygon into one giant list and shuffle them
+            for i in range(len(polygons)):
+                image_data_bypolygon[i] = nd.concat(*image_data_bypolygon[i], num_args=len(image_data_bypolygon[i]), dim=0)
+                label_data_bypolygon[i] = nd.concat(*label_data_bypolygon[i], num_args=len(label_data_bypolygon[i]), dim=0)
+
 
         else:
             random_len = len(X_first_half) // len(polygons) + 1
@@ -306,8 +308,4 @@ def data_for_polygon(polygons):
             writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
 
-    print("polygons", len(image_data_bypolygon))
-    print("lists per polygon", len(image_data_bypolygon[0]))
-    print("image data per list", len(image_data_bypolygon[0][0]))
-    print("dimension of image", len(image_data_bypolygon[0][0][0]))
     return image_data_bypolygon, label_data_bypolygon

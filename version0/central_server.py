@@ -134,7 +134,6 @@ class Simulation:
         self.val_train_data = val_train_data
         self.val_test_data = val_test_data
         self.current_batch_index_by_polygon = [0 for i in range(len(polygons))]
-        self.current_list_index_by_polygon = [0 for i in range(len(polygons))]
         self.image_data_bypolygon = []
         self.label_data_bypolygon = []
         self.num_round = num_round
@@ -300,4 +299,3 @@ class Simulation:
         print("partitioning data...")
         self.image_data_bypolygon, self.label_data_bypolygon = data_for_polygon(self.polygons)
         self.current_batch_index_by_polygon = [0 for i in range(len(self.polygons))]
-        self.current_list_index_by_polygon = [0 for i in range(len(self.polygons))]
