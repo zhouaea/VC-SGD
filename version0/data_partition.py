@@ -201,11 +201,11 @@ def data_for_polygon(polygons):
             current_polygon = 0
 
             for i, (X_quarter, y_quarter) in enumerate(train_data):
-                # Assign half of data ("random data") to polygons (two lists per polygon)
+                # Assign half of data ("random data") to polygons (eight lists per polygon)
                 if i < 2:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
                                 len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
-                    # Divide the eighths into tenths, add four tenths to every polygon
+                    # Divide the sixteenths into tenths, add 8 tenths to every polygon
                     for j in range(NUM_POLYGONS):
                         if lists_in_polygon == 8:
                             print("polygon", current_polygon, "random half partitioned")
@@ -219,7 +219,7 @@ def data_for_polygon(polygons):
                 # Sort half of data by class, to assign to polygons later.
                 else:
                     # Measure performance.
-                    if i == 4:
+                    if i == 8:
                         start = time.time()
                         if cfg['write_cpu_and_memory']:
                             psutil.cpu_percent()
