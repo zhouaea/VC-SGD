@@ -100,9 +100,9 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    batch = NUM_TRAINING_DATA / 4 + (NUM_TRAINING_DATA % 4 > 0)
+    batch = int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0)
     print(batch)
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 4 + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
