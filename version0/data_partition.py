@@ -187,7 +187,6 @@ def data_for_polygon(polygons):
                 image_data_bypolygon[current_polygon].append(X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                 label_data_bypolygon[current_polygon].append(y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                 lists_in_polygon += 1
-        gc.collect()
 
     else:
         if cfg['dataset'] == 'pascalvoc':
@@ -278,11 +277,31 @@ def data_for_polygon(polygons):
                     label_data_bypolygon[current_polygon].append(nd.concat(*label_data_byclass[i], num_args=len(label_data_byclass[i]), dim=0))
                 lists_in_polygon += 1
 
-            # Combine lists in each polygon into one giant list and shuffle them
-            for i in range(len(polygons)):
-                image_data_bypolygon[i] = nd.concat(*image_data_bypolygon[i], num_args=len(image_data_bypolygon[i]), dim=0)
-                label_data_bypolygon[i] = nd.concat(*label_data_bypolygon[i], num_args=len(label_data_bypolygon[i]), dim=0)
+            # Combine lists in each polygon into one giant list and shuffle each polygon list.
+            for pi in range(len(polygons)):
+                # Combine.
+                temp_image_data_forpolygon = nd.concat(*image_data_bypolygon[pi], num_args=len(image_data_bypolygon[pi]), dim=0)
+                temp_label_data_forpolygon = nd.concat(*label_data_bypolygon[pi], num_args=len(label_data_bypolygon[pi]), dim=0)
 
+                # We need to shuffle both image and label data in the same way, thus this complicated approach.
+                random_data_indices = [i for i in range(len(temp_image_data_forpolygon))]
+                random.shuffle(random_data_indices)
+
+                image_data_bypolygon[pi] = temp_image_data_forpolygon[random_data_indices[0]: random_data_indices[0] + 1]
+                label_data_bypolygon[pi] = temp_label_data_forpolygon[random_data_indices[0]: random_data_indices[0] + 1]
+                for i, ri in enumerate(random_data_indices):
+                    if i == 0:
+                        continue
+                    image_data_bypolygon[pi] = nd.concat(image_data_bypolygon[pi], temp_image_data_forpolygon[ri: ri + 1],
+                                                             num_args=2, dim=0)
+                    label_data_bypolygon[pi] = nd.concat(label_data_bypolygon[pi], temp_label_data_forpolygon[ri: ri + 1],
+                                                             num_args=2, dim=0)
+
+            # Clean up temporary variables
+            del temp_image_data_forpolygon
+            del temp_label_data_forpolygon
+            del random_data_indices
+            gc.collect()
 
         else:
             random_len = len(X_first_half) // len(polygons) + 1
