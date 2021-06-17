@@ -100,7 +100,9 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
-    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), NUM_TRAINING_DATA / 16 + (NUM_TRAINING_DATA % 16 > 0), # round up if there is a decimal
+    train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA),
+                                          NUM_TRAINING_DATA / 16 + (NUM_TRAINING_DATA % 16 > 0),
+                                          # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
@@ -154,6 +156,7 @@ else:
         for j in range(len(X_second_half)):
             train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
+
 @profile
 def data_for_polygon(polygons):
     """
@@ -178,7 +181,8 @@ def data_for_polygon(polygons):
 
         # In each quarter of the image and label data, put a tenth into each polygon's list.
         for i, (X_quarter, y_quarter) in enumerate(train_data):
-            one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (len(X_quarter) % NUM_POLYGONS > 0) # round up if there is a decimal
+            one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
+                        len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
             for j in range(NUM_POLYGONS):
                 if lists_in_polygon == 8:
                     print("polygon", current_polygon, "partitioned")
@@ -204,7 +208,7 @@ def data_for_polygon(polygons):
                 # Assign half of data ("random data") to polygons (eight lists per polygon)
                 if i < 8:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
-                                len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
+                            len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
                     # Divide the sixteenths into tenths, add 8 tenths to every polygon
                     for j in range(NUM_POLYGONS):
                         if lists_in_polygon == 8:
@@ -240,8 +244,10 @@ def data_for_polygon(polygons):
 
                         # Add the datum to a randomly chosen object class that it contains.
                         # Note: We must add an extra dimension to each datum so we concatenate by batch later.
-                        image_data_byclass[potential_class_indices[random_class_index]].append(nd.expand_dims(X_quarter[j], axis=0))
-                        label_data_byclass[potential_class_indices[random_class_index]].append(nd.expand_dims(y_quarter[j], axis=0))
+                        image_data_byclass[potential_class_indices[random_class_index]].append(
+                            nd.expand_dims(X_quarter[j], axis=0))
+                        label_data_byclass[potential_class_indices[random_class_index]].append(
+                            nd.expand_dims(y_quarter[j], axis=0))
 
             # Measure performance of partitioning data into classes
             end = time.time()
@@ -273,29 +279,37 @@ def data_for_polygon(polygons):
                 # Note that it is important that the polygon lists are ndarrays. Thus, we
                 # must convert our list of ndarrays into an ndarray of ndarrays.
                 if len(image_data_byclass[i]) != 0:
-                    image_data_bypolygon[current_polygon].append(nd.concat(*image_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0))
-                    label_data_bypolygon[current_polygon].append(nd.concat(*label_data_byclass[i], num_args=len(label_data_byclass[i]), dim=0))
+                    image_data_bypolygon[current_polygon].append(
+                        nd.concat(*image_data_byclass[i], num_args=len(image_data_byclass[i]), dim=0))
+                    label_data_bypolygon[current_polygon].append(
+                        nd.concat(*label_data_byclass[i], num_args=len(label_data_byclass[i]), dim=0))
                 lists_in_polygon += 1
 
             # Combine lists in each polygon into one giant list and shuffle each polygon list.
             for pi in range(len(polygons)):
                 # Combine.
-                temp_image_data_forpolygon = nd.concat(*image_data_bypolygon[pi], num_args=len(image_data_bypolygon[pi]), dim=0)
-                temp_label_data_forpolygon = nd.concat(*label_data_bypolygon[pi], num_args=len(label_data_bypolygon[pi]), dim=0)
+                temp_image_data_forpolygon = nd.concat(*image_data_bypolygon[pi],
+                                                       num_args=len(image_data_bypolygon[pi]), dim=0)
+                temp_label_data_forpolygon = nd.concat(*label_data_bypolygon[pi],
+                                                       num_args=len(label_data_bypolygon[pi]), dim=0)
 
                 # We need to shuffle both image and label data in the same way, thus this complicated approach.
                 random_data_indices = [i for i in range(len(temp_image_data_forpolygon))]
                 random.shuffle(random_data_indices)
 
-                image_data_bypolygon[pi] = temp_image_data_forpolygon[random_data_indices[0]: random_data_indices[0] + 1]
-                label_data_bypolygon[pi] = temp_label_data_forpolygon[random_data_indices[0]: random_data_indices[0] + 1]
+                image_data_bypolygon[pi] = temp_image_data_forpolygon[
+                                           random_data_indices[0]: random_data_indices[0] + 1]
+                label_data_bypolygon[pi] = temp_label_data_forpolygon[
+                                           random_data_indices[0]: random_data_indices[0] + 1]
                 for i, ri in enumerate(random_data_indices):
                     if i == 0:
                         continue
-                    image_data_bypolygon[pi] = nd.concat(image_data_bypolygon[pi], temp_image_data_forpolygon[ri: ri + 1],
-                                                             num_args=2, dim=0)
-                    label_data_bypolygon[pi] = nd.concat(label_data_bypolygon[pi], temp_label_data_forpolygon[ri: ri + 1],
-                                                             num_args=2, dim=0)
+                    image_data_bypolygon[pi] = nd.concat(image_data_bypolygon[pi],
+                                                         temp_image_data_forpolygon[ri: ri + 1],
+                                                         num_args=2, dim=0)
+                    label_data_bypolygon[pi] = nd.concat(label_data_bypolygon[pi],
+                                                         temp_label_data_forpolygon[ri: ri + 1],
+                                                         num_args=2, dim=0)
 
             # Clean up temporary variables
             del temp_image_data_forpolygon
@@ -317,7 +331,6 @@ def data_for_polygon(polygons):
                 X_new, y_new = shuffle(np.array(X_new), np.array(y_new))
                 image_data_bypolygon.append(X_new.tolist())
                 label_data_bypolygon.append(y_new.tolist())
-
 
     end = time.time()
     if cfg['write_cpu_and_memory']:
