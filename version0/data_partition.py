@@ -211,10 +211,18 @@ def data_for_polygon(polygons):
                             print("polygon", current_polygon, "random half partitioned")
                             lists_in_polygon = 0
                             current_polygon += 1
-                        image_data_bypolygon[current_polygon].append(
-                            X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
-                        label_data_bypolygon[current_polygon].append(
-                            y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+                        # If the end slice point would be greater than the length of the batch,
+                        # take slightly less than a tenth.
+                        if (j+1) * one_tenth_index > len(X_quarter):
+                            image_data_bypolygon[current_polygon].append(
+                                X_quarter[j * one_tenth_index:])
+                            label_data_bypolygon[current_polygon].append(
+                                y_quarter[j * one_tenth_index:])
+                        else:
+                            image_data_bypolygon[current_polygon].append(
+                                X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+                            label_data_bypolygon[current_polygon].append(
+                                y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                         lists_in_polygon += 1
                 # Sort half of data by class, to assign to polygons later.
                 else:
