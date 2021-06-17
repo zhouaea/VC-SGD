@@ -202,7 +202,7 @@ def data_for_polygon(polygons):
 
             for i, (X_quarter, y_quarter) in enumerate(train_data):
                 # Assign half of data ("random data") to polygons (eight lists per polygon)
-                if i < 2:
+                if i < 8:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
                                 len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
                     # Divide the sixteenths into tenths, add 8 tenths to every polygon
@@ -266,7 +266,7 @@ def data_for_polygon(polygons):
             current_polygon = 0
 
             for i in random_class_indices:
-                if lists_in_polygon == 4:
+                if lists_in_polygon == 8:
                     print("polygon", current_polygon, "class half partitioned")
                     lists_in_polygon = 0
                     current_polygon += 1
