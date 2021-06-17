@@ -139,12 +139,9 @@ class Simulation:
         self.num_round = num_round
         self.running_time = 0
         if cfg['dataset'] == 'pascalvoc':
-            old_ctx = list(self.central_server.net.collect_params().values())[0].list_ctx()
-            self.central_server.net.collect_params().reset_ctx(mx.cpu())
             self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.central_server.net(self.fake_x)
-            self.central_server.net.collect_params().reset_ctx(old_ctx)
             self.target_generator = YOLOV3PrefetchTargetGenerator(
                 num_class=len(self.central_server.net.classes))
             self.epoch_loss = gcv.loss.YOLOV3Loss()
