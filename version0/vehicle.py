@@ -97,12 +97,6 @@ class Vehicle:
 
         with autograd.record():
             if cfg['dataset'] == 'pascalvoc':
-                print('gradient computation starting')
-                # Calculate targets required to calculate loss.
-                print(y)
-                print(len(y))
-                print(len(y[0])) # objects
-                print(len(y[0][0])) # should be 6
                 gt_bboxes = y[:, :, :4]
                 gt_ids = y[:, :, 4:5]
 
@@ -113,8 +107,6 @@ class Vehicle:
                     gt_bboxes, gt_ids, None)
 
                 end_targets = time.time()
-                print('targets calculated in ', end_targets - start_targets)
-                exit()
 
                 # Calculate loss by using network in training mode and supplying extra target parameters.
                 with autograd.train_mode():
@@ -122,7 +114,6 @@ class Vehicle:
                                                                            center_targets, scale_targets,
                                                                            weights, class_targets)
                 loss = obj_loss + center_loss + scale_loss + cls_loss
-                print('loss calculated')
             else:
                 output = self.net(X)
                 if cfg['attack'] == 'label' and len(closest_rsu.accumulative_gradients) < cfg['num_faulty_grads']:

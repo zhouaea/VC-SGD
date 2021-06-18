@@ -102,16 +102,16 @@ elif cfg['dataset'] == 'pascalvoc':
     print('loading dataloader...')
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
-                                          batchify_fn=batchify_fn, last_batch='keep', num_workers=10)
+                                          batchify_fn=batchify_fn, last_batch='keep')
 
     val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']),
                                               cfg['test_and_val_train_batch_size'],
                                               shuffle=False,
-                                              batchify_fn=batchify_fn, last_batch='keep', num_workers=10)
+                                              batchify_fn=batchify_fn, last_batch='keep')
     val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(cfg['num_test_data']),
                                              cfg['test_and_val_train_batch_size'],
                                              shuffle=False,
-                                             batchify_fn=batchify_fn, last_batch='keep', num_workers=10)
+                                             batchify_fn=batchify_fn, last_batch='keep')
 
     # Clean up unused datasets
     del train_dataset
@@ -228,7 +228,6 @@ def data_for_polygon(polygons):
                 else:
                     # Measure performance.
                     if i == 2:
-                        start = time.time()
                         if cfg['write_cpu_and_memory']:
                             psutil.cpu_percent()
 
