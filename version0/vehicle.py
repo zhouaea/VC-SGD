@@ -60,7 +60,7 @@ class Vehicle:
         self.y = y
         self.speed = speed
 
-    
+    @profile
     def download_model_from(self, central_server):
         self.net = central_server.net
 
@@ -142,7 +142,7 @@ class Vehicle:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([end - start])
 
-    
+    @profile
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu
         rsu.accumulative_gradients.append(self.gradients)
@@ -150,13 +150,14 @@ class Vehicle:
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             rsu.communicate_with_central_server(simulation.central_server)
 
-    
+    @profile
     def compute_and_upload(self, simulation, closest_rsu):
         # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
         if cfg['dataset'] == 'pascalvoc':
             # Avoid using intermediary lists to save memory.
             # Iterate through each individual batch
             for training_data, label_data in self.training_data_assigned.values():
+                print('batch 1 start')
                 self.compute(simulation, closest_rsu, training_data, label_data)
                 self.upload(simulation, closest_rsu)
         else:
