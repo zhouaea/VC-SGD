@@ -101,6 +101,7 @@ class Vehicle:
                 print('gradient computation starting')
                 # Passing input with * will calculate the loss instead of the model output.
                 # Acquire all variables required to calculate loss.
+                print(len(y))
                 gt_bboxes = y[:, :, :4]
                 gt_ids = y[:, :, 4:5]
 
@@ -112,6 +113,7 @@ class Vehicle:
 
                 end_targets = time.time()
                 print('targets calculated in ', end_targets - start_targets)
+                exit()
 
                 # Calculate loss by using network in training mode and supplying extra target parameters.
                 with autograd.train_mode():
