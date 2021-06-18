@@ -100,6 +100,7 @@ class Vehicle:
 
         with autograd.record():
             if cfg['dataset'] == 'pascalvoc':
+                print('gradient computation starting')
                 # Passing input with * will calculate the loss instead of the model output.
                 # Acquire all variables required to calculate loss.
                 gt_bboxes = y[:, :, :4]
@@ -109,12 +110,15 @@ class Vehicle:
                     simulation.fake_x, simulation.feat_maps, simulation.anchors, simulation.offsets,
                     gt_bboxes, gt_ids, None)
 
+                print('targets calculated')
+
                 # Calculate loss by using network in training mode and supplying extra target parameters.
                 with autograd.train_mode():
                     obj_loss, center_loss, scale_loss, cls_loss = self.net(X, gt_bboxes, objectness,
                                                                            center_targets, scale_targets,
                                                                            weights, class_targets)
                 loss = obj_loss + center_loss + scale_loss + cls_loss
+                print('loss calculated')
             else:
                 output = self.net(X)
                 if cfg['attack'] == 'label' and len(closest_rsu.accumulative_gradients) < cfg['num_faulty_grads']:
@@ -122,7 +126,7 @@ class Vehicle:
                 else:
                     loss = neural_net.loss(output, y)
         loss.backward()
-
+        print('gradients computed')
         grad_collect = []
         for param in self.net.collect_params().values():
             if param.grad_req != 'null':

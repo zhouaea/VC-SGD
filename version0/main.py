@@ -40,7 +40,7 @@ file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
-
+@profile
 def extract_batch_from_polygon(simulation, polygon_index):
     if cfg['dataset'] == 'pascalvoc':
         # We do not delete elements in the list because mxnet ndarrays do not have delete operations.
