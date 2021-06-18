@@ -27,6 +27,7 @@ BATCH_SIZE = cfg['neural_network']['batch_size']
 # np.random.seed(cfg['seed'])
 counter = 0
 
+
 class Vehicle:
     """
     Vehicle object for Car ML Simulator.
@@ -41,7 +42,6 @@ class Vehicle:
     - gradients
     """
 
-    
     def __init__(self, car_id):
         self.car_id = car_id
         self.x = 0
@@ -64,7 +64,6 @@ class Vehicle:
     def download_model_from(self, central_server):
         self.net = central_server.net
 
-    
     def handle_data(self):
         num_polygons = len(self.training_data_assigned)
         # Combine data from different polygons
@@ -82,7 +81,6 @@ class Vehicle:
             self.training_data.append(nd.array(combined_data[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
-    
     def compute(self, simulation, closest_rsu, *args):
         psutil.cpu_percent()
         
@@ -106,11 +104,14 @@ class Vehicle:
                 gt_bboxes = y[:, :, :4]
                 gt_ids = y[:, :, 4:5]
 
+                start_targets = time.time()
+
                 objectness, center_targets, scale_targets, weights, class_targets = simulation.target_generator(
                     simulation.fake_x, simulation.feat_maps, simulation.anchors, simulation.offsets,
                     gt_bboxes, gt_ids, None)
 
-                print('targets calculated')
+                end_targets = time.time()
+                print('targets calculated in ', end_targets - start_targets)
 
                 # Calculate loss by using network in training mode and supplying extra target parameters.
                 with autograd.train_mode():
@@ -146,7 +147,6 @@ class Vehicle:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([end - start])
 
-    @profile
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu
         rsu.accumulative_gradients.append(self.gradients)
@@ -154,7 +154,6 @@ class Vehicle:
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             rsu.communicate_with_central_server(simulation.central_server)
 
-    @profile
     def compute_and_upload(self, simulation, closest_rsu):
         # We shuffle pascal voc data well enough that extra shuffling is not required for the dataset.
         if cfg['dataset'] == 'pascalvoc':
