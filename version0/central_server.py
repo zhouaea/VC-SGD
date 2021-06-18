@@ -95,12 +95,9 @@ class Central_Server:
             self.accumulative_gradients = []
 
             # Update targets when updating model.
-            old_ctx = list(self.net.collect_params().values())[0].list_ctx()
-            self.net.collect_params().reset_ctx(mx.cpu())
             self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
-            self.net.collect_params().reset_ctx(old_ctx)
 
             if cfg['write_cpu_and_memory']:
                 with open(os.path.join('collected_results', 'computer_resource_percentages'),
