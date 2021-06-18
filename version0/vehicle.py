@@ -12,7 +12,6 @@ import yaml
 import heapq
 from sklearn.utils import shuffle
 from shapely.geometry import Point
-from gluoncv.model_zoo.yolo.yolo_target import YOLOV3PrefetchTargetGenerator
 from memory_profiler import profile
 
 import mxnet as mx
@@ -99,9 +98,11 @@ class Vehicle:
         with autograd.record():
             if cfg['dataset'] == 'pascalvoc':
                 print('gradient computation starting')
-                # Passing input with * will calculate the loss instead of the model output.
-                # Acquire all variables required to calculate loss.
+                # Calculate targets required to calculate loss.
+                print(y)
                 print(len(y))
+                print(len(y[0])) # objects
+                print(len(y[0][0])) # should be 6
                 gt_bboxes = y[:, :, :4]
                 gt_ids = y[:, :, 4:5]
 
