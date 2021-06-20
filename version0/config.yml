@@ -18,8 +18,8 @@ simulation:
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
-  batch_size: 1
-  epoch: 1
+  batch_size: 10
+  epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
   # the yolo models provided by gluon require either 320 x 320 or 416 x 416, each model only supports one size
@@ -46,7 +46,7 @@ even_distribution: false
 # mnist, cifar10, pascalvoc
 dataset: 'pascalvoc'
 # 60000 for mnist, 16551 for pascalvoc
-num_training_data: 40
+num_training_data: 8000
 num_val_train_data: 100
 num_test_data: 100
 test_and_val_train_batch_size: 10
