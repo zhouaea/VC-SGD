@@ -59,7 +59,6 @@ class Vehicle:
         self.y = y
         self.speed = speed
 
-    @profile
     def download_model_from(self, central_server):
         self.net = central_server.net
 
