@@ -134,7 +134,7 @@ class Simulation:
         self.image_data_bypolygon = []
         self.label_data_bypolygon = []
         self.num_round = num_round
-        self.running_time = 0
+        self.virtual_timestep = 0
         if cfg['dataset'] == 'pascalvoc':
             self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
             with autograd.train_mode():
@@ -285,8 +285,21 @@ class Simulation:
             else:
                 writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, cfg['aggregation_method'], cfg['attack']])
 
-    
-    def new_epoch(self):
+
+    def new_epoch(self, *args):
+        if len(args) != 0:
+            epoch_runtime = args[0]
+            virtual_time_step = args[1]
+
+        # Calculate accuracy and loss every 5 epochs.
+        if self.num_epoch != 0 and self.num_epoch % 5 == 0:
+            print('Epoch', self.num_epoch)
+            self.print_accuracy(epoch_runtime, virtual_time_step)
+
+        # After measuring at 99 epochs, no need to train another time.
+        if self.num_epoch == cfg['neural_network']['epoch']:
+            exit()
+
         self.num_epoch += 1
         # for i, (data, label) in enumerate(self.training_set):
         #     self.training_data.append((data, label))

@@ -120,7 +120,6 @@ class Vehicle:
                 else:
                     loss = neural_net.loss(output, y)
         loss.backward()
-        print('gradients computed')
         grad_collect = []
         for param in self.net.collect_params().values():
             if param.grad_req != 'null':

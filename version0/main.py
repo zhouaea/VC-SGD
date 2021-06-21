@@ -159,10 +159,8 @@ def simulate(simulation):
                                 training_data_assigned, training_label_assigned)
                     else:
                         epoch_runtime_end = time.time()
-                        simulation.print_accuracy(epoch_runtime_end - epoch_runtime_start,
-                                                  simulation.running_time + float(timestep.attrib['time']))
+                        simulation.new_epoch(epoch_runtime_end - epoch_runtime_start, simulation.virtual_timestep + float(timestep.attrib['time']))
                         epoch_runtime_start = time.time()
-                        simulation.new_epoch()
                         if len(simulation.image_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
@@ -176,7 +174,7 @@ def simulate(simulation):
 
                     vehi.compute_and_upload(simulation, closest_rsu)
 
-        simulation.running_time += float(timestep.attrib['time'])
+        simulation.virtual_timestep += float(timestep.attrib['time'])
 
     return simulation.central_server.net
 
