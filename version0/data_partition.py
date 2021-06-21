@@ -154,7 +154,7 @@ else:
         for j in range(len(X_second_half)):
             train_data_byclass[y_second_half[j]].append(X_second_half[j])
 
-@profile
+
 def data_for_polygon(polygons):
     """
         Returns training data and labels for new epochs.
@@ -181,7 +181,6 @@ def data_for_polygon(polygons):
             one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (len(X_quarter) % NUM_POLYGONS > 0) # round up if there is a decimal
             for j in range(NUM_POLYGONS):
                 if lists_in_polygon == 4:
-                    print("polygon", current_polygon, "partitioned")
                     lists_in_polygon = 0
                     current_polygon += 1
                 image_data_bypolygon[current_polygon].append(X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
@@ -208,7 +207,6 @@ def data_for_polygon(polygons):
                     # Divide the quarters into tenths, add two tenths to every polygon
                     for j in range(NUM_POLYGONS):
                         if lists_in_polygon == 2:
-                            print("polygon", current_polygon, "random half partitioned")
                             lists_in_polygon = 0
                             current_polygon += 1
                         # If the end slice point would be greater than the length of the batch,
@@ -274,7 +272,6 @@ def data_for_polygon(polygons):
 
             for i in random_class_indices:
                 if lists_in_polygon == 2:
-                    print("polygon", current_polygon, "class half partitioned")
                     lists_in_polygon = 0
                     current_polygon += 1
                 # Note that it is important that the polygon lists are ndarrays. Thus, we
