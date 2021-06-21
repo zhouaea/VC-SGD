@@ -47,7 +47,7 @@ even_distribution: false
 dataset: 'pascalvoc'
 # 60000 for mnist, 16551 for pascalvoc
 num_training_data: 8000 # minimum batch size is 40, since we load in quarters and divide by 10
-num_val_train_data: 1000
+num_val_train_data: 100
 num_test_data: 1000
 test_and_val_train_batch_size: 10
 
