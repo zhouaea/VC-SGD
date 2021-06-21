@@ -291,7 +291,8 @@ class Simulation:
             epoch_runtime = args[0]
             virtual_time_step = args[1]
 
-        print('Epoch', self.num_epoch, 'runtime:', epoch_runtime)
+        if self.num_epoch != 0:
+            print('Epoch', self.num_epoch, 'runtime:', epoch_runtime)
 
         # Calculate accuracy and loss every 5 epochs.
         if self.num_epoch != 0 and self.num_epoch % 5 == 0:
