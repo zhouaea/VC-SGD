@@ -18,7 +18,7 @@ simulation:
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
-  batch_size: 10
+  batch_size: 64
   epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
@@ -47,9 +47,9 @@ even_distribution: false
 dataset: 'pascalvoc'
 # 60000 for mnist, 16551 for pascalvoc
 num_training_data: 8000 # minimum batch size is 40, since we load in quarters and divide by 10
-num_val_train_data: 100
-num_test_data: 1000
-test_and_val_train_batch_size: 10
+num_val_train_data: 112
+num_test_data: 1008
+test_and_val_train_batch_size: 16
 
 
 aggregation_method: 'simplemean' # simplemean, cgc
