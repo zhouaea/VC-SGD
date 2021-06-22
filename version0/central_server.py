@@ -70,7 +70,9 @@ class Central_Server:
                 self.net.add(gluon.nn.Dense(10))
         elif cfg['dataset'] == 'pascalvoc':
             self.net = get_model('yolo3_mobilenet1.0_voc', pretrained=False)
+
         self.net.initialize(mx.init.Xavier(), ctx=ctx, force_reinit=True)
+        # OR do self.net.load_parameters('models/yolo_x', ctx=ctx)
 
         self.accumulative_gradients = []
 
@@ -246,7 +248,6 @@ class Simulation:
 
         # Retrieve acuracy and loss and then save them into a csv.
         _, accu = self.epoch_accuracy.get()
-        print(accu)
 
         if cfg['dataset'] == 'pascalvoc':
             obj_loss = np.array(self.obj_losses).mean()
@@ -298,13 +299,12 @@ class Simulation:
         if self.num_epoch != 0 and self.num_epoch % 5 == 0:
             self.print_accuracy(epoch_runtime, virtual_time_step)
 
-        # After measuring at 99 epochs, no need to train another time.
-        if self.num_epoch == cfg['neural_network']['epoch']:
+        if self.num_epoch != 0 and self.num_epoch % 10 == 0:
+            filename = 'models/yolo_' + str(self.num_epoch)
+            self.central_server.net.save_parameters(filename)
             exit()
 
         self.num_epoch += 1
-        # for i, (data, label) in enumerate(self.training_set):
-        #     self.training_data.append((data, label))
         print("partitioning data...")
         self.image_data_bypolygon, self.label_data_bypolygon = data_for_polygon(self.polygons)
         self.current_batch_index_by_polygon = [0 for i in range(len(self.polygons))]
