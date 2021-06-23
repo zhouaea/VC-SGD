@@ -300,9 +300,10 @@ class Simulation:
             self.print_accuracy(epoch_runtime, virtual_time_step)
 
         if self.num_epoch != 0 and self.num_epoch % 10 == 0:
+            if not os.path.exists('models'):
+                os.makedirs('models')
             filename = 'models/yolo_' + str(self.num_epoch)
             self.central_server.net.save_parameters(filename)
-            exit()
 
         self.num_epoch += 1
         print("partitioning data...")
