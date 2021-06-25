@@ -1,0 +1,48 @@
+# Gives shape of the gradients for each layer of the yolov3 network.
+[!!python/tuple [32, 3, 3, 3], !!python/tuple [32], !!python/tuple [32], !!python/tuple [
+    32, 1, 3, 3], !!python/tuple [32], !!python/tuple [32], !!python/tuple [64, 32,
+    1, 1], !!python/tuple [64], !!python/tuple [64], !!python/tuple [64, 1, 3, 3],
+  !!python/tuple [64], !!python/tuple [64], !!python/tuple [128, 64, 1, 1], !!python/tuple [
+    128], !!python/tuple [128], !!python/tuple [128, 1, 3, 3], !!python/tuple [128],
+  !!python/tuple [128], !!python/tuple [128, 128, 1, 1], !!python/tuple [128], !!python/tuple [
+    128], !!python/tuple [128, 1, 3, 3], !!python/tuple [128], !!python/tuple [128],
+  !!python/tuple [256, 128, 1, 1], !!python/tuple [256], !!python/tuple [256], !!python/tuple [
+    256, 1, 3, 3], !!python/tuple [256], !!python/tuple [256], !!python/tuple [256,
+    256, 1, 1], !!python/tuple [256], !!python/tuple [256], !!python/tuple [256, 1,
+    3, 3], !!python/tuple [256], !!python/tuple [256], !!python/tuple [512, 256, 1,
+    1], !!python/tuple [512], !!python/tuple [512], !!python/tuple [512, 1, 3, 3],
+  !!python/tuple [512], !!python/tuple [512], !!python/tuple [512, 512, 1, 1], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [512, 1, 3, 3], !!python/tuple [512],
+  !!python/tuple [512], !!python/tuple [512, 512, 1, 1], !!python/tuple [512], !!python/tuple [
+    512], !!python/tuple [512, 1, 3, 3], !!python/tuple [512], !!python/tuple [512],
+  !!python/tuple [512, 512, 1, 1], !!python/tuple [512], !!python/tuple [512], !!python/tuple [
+    512, 1, 3, 3], !!python/tuple [512], !!python/tuple [512], !!python/tuple [512,
+    512, 1, 1], !!python/tuple [512], !!python/tuple [512], !!python/tuple [512, 1,
+    3, 3], !!python/tuple [512], !!python/tuple [512], !!python/tuple [512, 512, 1,
+    1], !!python/tuple [512], !!python/tuple [512], !!python/tuple [512, 1, 3, 3],
+  !!python/tuple [512], !!python/tuple [512], !!python/tuple [1024, 512, 1, 1], !!python/tuple [
+    1024], !!python/tuple [1024], !!python/tuple [1024, 1, 3, 3], !!python/tuple [
+    1024], !!python/tuple [1024], !!python/tuple [1024, 1024, 1, 1], !!python/tuple [
+    1024], !!python/tuple [1024], !!python/tuple [256, 512, 1, 1], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [128, 256, 1, 1], !!python/tuple [
+    128], !!python/tuple [128], !!python/tuple [512, 1024, 1, 1], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [1024, 512, 3, 3], !!python/tuple [
+    1024], !!python/tuple [1024], !!python/tuple [512, 1024, 1, 1], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [1024, 512, 3, 3], !!python/tuple [
+    1024], !!python/tuple [1024], !!python/tuple [512, 1024, 1, 1], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [1024, 512, 3, 3], !!python/tuple [
+    1024], !!python/tuple [1024], !!python/tuple [256, 768, 1, 1], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [512, 256, 3, 3], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [256, 512, 1, 1], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [512, 256, 3, 3], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [256, 512, 1, 1], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [512, 256, 3, 3], !!python/tuple [
+    512], !!python/tuple [512], !!python/tuple [128, 384, 1, 1], !!python/tuple [
+    128], !!python/tuple [128], !!python/tuple [256, 128, 3, 3], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [128, 256, 1, 1], !!python/tuple [
+    128], !!python/tuple [128], !!python/tuple [256, 128, 3, 3], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [128, 256, 1, 1], !!python/tuple [
+    128], !!python/tuple [128], !!python/tuple [256, 128, 3, 3], !!python/tuple [
+    256], !!python/tuple [256], !!python/tuple [75, 1024, 1, 1], !!python/tuple [
+    75], !!python/tuple [75, 512, 1, 1], !!python/tuple [75], !!python/tuple [75,
+    256, 1, 1], !!python/tuple [75]]

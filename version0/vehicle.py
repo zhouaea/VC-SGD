@@ -126,10 +126,16 @@ class Vehicle:
                 grad_collect.append(param.grad().copy())
 
         self.gradients = grad_collect
-        # print(self.gradients)
-        # print(len(self.gradients))
-        # for i in range(len(self.gradients)):
-        #     print(len(self.gradients[i]))
+
+        yolov3_gradient_format = []
+
+        for layer in self.gradients:
+            yolov3_gradient_format.append(layer.shape)
+
+        with open('download_helper_scripts/gradient_format/yolov3_gradient_format.yml', 'w') as outfile:
+            yaml.dump(yolov3_gradient_format, outfile, default_flow_style=True)
+        exit()
+
         end = time.time()
         print('time to train on one batch:', end-start)
         print('CPU %:', psutil.cpu_percent())
@@ -141,6 +147,7 @@ class Vehicle:
 
     def upload(self, simulation, closest_rsu):
         rsu = closest_rsu
+
         rsu.accumulative_gradients.append(self.gradients)
         # RSU checks if enough gradients collected
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
