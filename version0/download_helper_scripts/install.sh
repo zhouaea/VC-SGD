@@ -32,3 +32,6 @@ export OMP_NUM_THREADS=$((vCPUs / 2))
 python3.9 download_pascal_voc.py
 rm ../../data/pascalvoc/*.tar
 cd ..
+
+# Download application that will continue to run experiments even if the ssh connection breaks.
+sudo apt-get install screen

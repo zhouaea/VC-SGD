@@ -4,6 +4,7 @@ import os
 import time
 
 import psutil
+import gc
 
 from neural_network import Neural_Network
 import random
@@ -21,6 +22,10 @@ from memory_profiler import profile
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
+
+if cfg['communication']['top_k_enabled']:
+    with open('download_helper_scripts/gradient_format/yolov3_gradient_format.yml', 'w') as infile:
+        yolo_v3_gradient_structure = yaml.load(infile, Loader=yaml.FullLoader)
 
 # random.seed(cfg['seed'])
 # np.random.seed(cfg['seed'])
@@ -127,15 +132,6 @@ class Vehicle:
 
         self.gradients = grad_collect
 
-        yolov3_gradient_format = []
-
-        for layer in self.gradients:
-            yolov3_gradient_format.append(layer.shape)
-
-        with open('download_helper_scripts/gradient_format/yolov3_gradient_format.yml', 'w') as outfile:
-            yaml.dump(yolov3_gradient_format, outfile, default_flow_style=True)
-        exit()
-
         end = time.time()
         print('time to train on one batch:', end-start)
         print('CPU %:', psutil.cpu_percent())
@@ -146,9 +142,33 @@ class Vehicle:
                 writer.writerow([end - start])
 
     def upload(self, simulation, closest_rsu):
-        rsu = closest_rsu
+        # Find the top-k gradients for each layer and encode them.
+        top_k_gradients = []
+        for layer in self.gradients:
+            # This function will return a 2d list where row 0 has k values and row 1 has
+            # k flattened indices. Ex: The last index of a 3 x 3 array would be 8 when flattened.
+            top_k_gradients.append(nd.topk(layer, axis=None, k=cfg['communication']['k'], ret_typ='both'))
 
+        self.gradients = top_k_gradients
+
+        # Measure how much data is being transmitted from vehicle to gradient.
+        bytes_used = 0
+        for layer in self.gradients:
+            bytes_used += layer.size * layer.dtype
+
+        print(bytes_used) # Write this to csv file later.
+
+        # Upload data to RSU.
+        rsu = closest_rsu
         rsu.accumulative_gradients.append(self.gradients)
+        rsu.accumulative_gradients[]
+
+
+        # Save memory by deleting gradients from vehicle after upload.
+        del top_k_gradients
+        del self.gradients
+        gc.collect()
+
         # RSU checks if enough gradients collected
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             rsu.communicate_with_central_server(simulation.central_server)
