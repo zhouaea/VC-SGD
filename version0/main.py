@@ -86,11 +86,6 @@ def simulate(simulation):
 
             if float(timestep.attrib['time']) % 200 == 0:
                 print(timestep.attrib['time'])
-                if cfg['write_cpu_and_memory']:
-                    with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                              mode='a') as f:
-                        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                        writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
 
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)
@@ -118,23 +113,19 @@ def simulate(simulation):
 
             # For each vehicle on the map at the timestep (Training)
             for vehicle in timestep.findall('vehicle'):
-
-                psutil.cpu_percent()
-
                 # Find the polygon the vehi is currently in.
                 polygon_index = vehi.in_polygon(simulation.polygons)
                 # If the vehi goes into a new polygon
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    if ((any(len(x) >= BATCH_SIZE for x in simulation.image_data_bypolygon)) and (
-                            cfg['dataset'] != 'pascalvoc')) or ((any(
+                    if ((cfg['dataset'] != 'pascalvoc') and (any(len(x) >= BATCH_SIZE for x in simulation.image_data_bypolygon))) or ((any(
                             (current_batch_index + 1) * BATCH_SIZE <= len(simulation.image_data_bypolygon[i]) for
                             i, current_batch_index in enumerate(simulation.current_batch_index_by_polygon))) and (
                             cfg['dataset'] == 'pascalvoc')):
                         # There is still enough data in this polygon.
                         if (cfg['dataset'] != 'pascalvoc' and len(
-                                simulation.image_data_bypolygon[polygon_index]) <= BATCH_SIZE) or (
+                                simulation.image_data_bypolygon[polygon_index]) >= BATCH_SIZE) or (
                                 cfg['dataset'] == 'pascalvoc' and (
                                 (simulation.current_batch_index_by_polygon[polygon_index] + 1) * BATCH_SIZE <= len(
                                 simulation.image_data_bypolygon[polygon_index]))):
@@ -142,18 +133,10 @@ def simulate(simulation):
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
 
-                            # Imperfect measure, since it disregards data found when there is a new epoch, but good enough.
-                            data_found = time.time()
-                            print([len(image_data_in_polygon) - simulation.current_batch_index_by_polygon[i] * BATCH_SIZE for i, image_data_in_polygon in enumerate(simulation.image_data_bypolygon)])
-                            print('CPU %:', psutil.cpu_percent())
-
-                            if cfg['write_runtime_statistics']:
-                                with open(os.path.join('collected_results', 'time_for_vehicle_to_enter_zone_with_data'),
-                                          mode='a') as f:
-                                    if data_last_found is not None:
-                                        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                                        writer.writerow([data_found - data_last_found])
-                            data_last_found = time.time()
+                            if cfg['dataset'] == 'pascalvoc':
+                                print([len(image_data_in_polygon) - simulation.current_batch_index_by_polygon[i] * BATCH_SIZE for i, image_data_in_polygon in enumerate(simulation.image_data_bypolygon)])
+                            else:
+                                print([len(x) for x in simulation.image_data_bypolygon])
 
                             vehi.training_data_assigned[polygon_index] = (
                                 training_data_assigned, training_label_assigned)
@@ -241,8 +224,6 @@ def main():
     #                                 batch_size, shuffle=False, last_batch='keep')
     #     val_test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform),
     #                                 batch_size, shuffle=False, last_batch='keep')
-    if cfg['write_cpu_and_memory']:
-        psutil.cpu_percent()
 
     # simulation = Simulation(FCD_FILE, vehicle_dict, rsu_list, vc_list, polygons, central_server, train_data, val_train_data, val_test_data, num_round)
     simulation = Simulation(FCD_FILE, vehicle_dict, rsu_list, vc_list, polygons, central_server, num_round)

@@ -23,10 +23,6 @@ file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 BATCH_SIZE = cfg['neural_network']['batch_size']
 
-if cfg['communication']['top_k_enabled']:
-    with open('download_helper_scripts/gradient_format/yolov3_gradient_format.yml', 'w') as infile:
-        yolo_v3_gradient_structure = yaml.load(infile, Loader=yaml.FullLoader)
-
 # random.seed(cfg['seed'])
 # np.random.seed(cfg['seed'])
 counter = 0
@@ -85,14 +81,11 @@ class Vehicle:
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
     def compute(self, simulation, closest_rsu, *args):
-        psutil.cpu_percent()
-        
         if cfg['dataset'] != 'pascalvoc':
             neural_net = Neural_Network()
-        start = time.time()
         
         # Extra arguments are for pascalvoc dataset, to prevent intermediary lists from being used to save memory.
-        if args is None:
+        if len(args) == 0:
             X = self.training_data.pop()
             y = self.training_label.pop()
         else:
@@ -132,42 +125,38 @@ class Vehicle:
 
         self.gradients = grad_collect
 
+    def upload(self, simulation, closest_rsu):
+        start = time.time()
+
+        # Send only the top k gradients in each layer of the network to save communication costs.
+        if cfg['communication']['top_k_enabled']:
+            self.encode_gradients()
+            self.print_gradient_size()
+
+            # Upload data to RSU
+            rsu = closest_rsu
+            rsu.accumulative_gradients.append(self.gradients)
+
+            # Save memory by deleting gradients from vehicle after upload.
+            del self.gradients
+            gc.collect()
+
+            rsu.decode_gradients()
+        # Use normal communication.
+        else:
+            self.print_gradient_size()
+
+            rsu = closest_rsu
+            rsu.accumulative_gradients.append(self.gradients)
+
         end = time.time()
-        print('time to train on one batch:', end-start)
+        print('time to upload and receive gradients for one batch:', end-start)
         print('CPU %:', psutil.cpu_percent())
 
         if cfg['write_runtime_statistics']:
-            with open(os.path.join('collected_results', 'time_to_train_on_one_batch'), mode='a') as f:
+            with open(os.path.join('collected_results', 'time_to_upload_and_receive_gradients'), mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([end - start])
-
-    def upload(self, simulation, closest_rsu):
-        # Find the top-k gradients for each layer and encode them.
-        top_k_gradients = []
-        for layer in self.gradients:
-            # This function will return a 2d list where row 0 has k values and row 1 has
-            # k flattened indices. Ex: The last index of a 3 x 3 array would be 8 when flattened.
-            top_k_gradients.append(nd.topk(layer, axis=None, k=cfg['communication']['k'], ret_typ='both'))
-
-        self.gradients = top_k_gradients
-
-        # Measure how much data is being transmitted from vehicle to gradient.
-        bytes_used = 0
-        for layer in self.gradients:
-            bytes_used += layer.size * layer.dtype
-
-        print(bytes_used) # Write this to csv file later.
-
-        # Upload data to RSU.
-        rsu = closest_rsu
-        rsu.accumulative_gradients.append(self.gradients)
-        rsu.accumulative_gradients[]
-
-
-        # Save memory by deleting gradients from vehicle after upload.
-        del top_k_gradients
-        del self.gradients
-        gc.collect()
 
         # RSU checks if enough gradients collected
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
@@ -184,14 +173,14 @@ class Vehicle:
         else:
             # Shuffle the collected data
             self.handle_data()
-            while self.training_data.values:
+            while self.training_data:
                 self.compute(simulation, closest_rsu)
                 self.upload(simulation, closest_rsu)
 
         self.training_data_assigned = {}
 
-    # Return the RSU that is cloest to the vehicle
     def closest_rsu(self, rsu_list):
+        """Return the RSU that is closest to the vehicle"""
         shortest_distance = 99999999  # placeholder (a random large number)
         closest_rsu = None
         for rsu in rsu_list:
@@ -201,9 +190,9 @@ class Vehicle:
                 closest_rsu = rsu
         return closest_rsu
 
-    # Return a list of RSUs that is within the range of the vehicle
-    # with each RSU being sorted from the closest to the furtherst
     def in_range_rsus(self, rsu_list):
+        """Return a list of RSUs that is within the range of the vehicle
+        with each RSU being sorted from the closest to the furthest"""
         in_range_rsus = []
         for rsu in rsu_list:
             distance = math.sqrt((rsu.rsu_x - self.x) ** 2 + (rsu.rsu_y - self.y) ** 2)
@@ -211,9 +200,41 @@ class Vehicle:
                 heapq.heappush(in_range_rsus, (distance, rsu))
         return [heapq.heappop(in_range_rsus)[1] for i in range(len(in_range_rsus))]
 
-    # Return the index of the polygon the vehicle is currently in
     def in_polygon(self, polygons):
+        """Return the index of the polygon the vehicle is currently in"""
         for i, polygon in enumerate(polygons):
             if polygon.contains(Point(self.x, self.y)):
                 return i
         raise Exception('Vehicle not in any polygon')
+
+    def encode_gradients(self):
+        """Find the top-k gradients for each layer and encode them."""
+        top_k_gradients = []
+        for layer in self.gradients:
+            # This function will return a 2d ndarray where row 0 has k values and row 1 has
+            # k flattened indices. Ex: The last index of a 3 x 3 array would be 8 when flattened.
+            top_k_gradients.append(nd.topk(layer, axis=None, k=cfg['communication']['k'], ret_typ='both'))
+
+        # Overwrite other gradients.
+        self.gradients = top_k_gradients
+
+    def print_gradient_size(self):
+        """Measure how much data is being transmitted from vehicle to gradient"""
+        bytes_used = 0
+
+        # Calculate number of bytes used in encoded data
+        if cfg['communication']['top_k_enabled']:
+            for layer in self.gradients:
+                # Each encoded layer is a list of 2 mxnet ndarrays. Thus, we count the elements in 
+                # one of the ndarrays, multiply by the size in bytes of its datatype (float32), and
+                # multiply by 2 since both mxnet ndarrays are of the same length and datatype
+                bytes_used += layer[0].size * 32 * 2
+        else:
+            for layer in self.gradients:
+                # Each layer is a one-dimensional to multidimensional ndarray.
+                bytes_used += layer.size * 32
+
+        if cfg['communication']['write_gradient_size']:
+            with open(os.path.join('collected_results', 'gradient_sizes'), mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([bytes_used])

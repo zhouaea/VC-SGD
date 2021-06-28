@@ -66,10 +66,6 @@ elif cfg['dataset'] == 'mnist':
         mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform).take(cfg['num_test_data']),
         batch_size=BATCH_SIZE, shuffle=False, last_batch='keep')
 elif cfg['dataset'] == 'pascalvoc':
-    # Call psutil before and after the code you want to analyze.
-    if cfg['write_cpu_and_memory']:
-        psutil.cpu_percent()
-
     # Typically we use 2007+2012 trainval splits for training data.
     # NOTES: 
     #   - Originally the training and label data are numpy ndarrays but are converted to mxnet ndarrays
@@ -86,12 +82,6 @@ elif cfg['dataset'] == 'pascalvoc':
 
     # and use 2007 test as validation data
     val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
-
-    if cfg['write_cpu_and_memory']:
-        with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                  mode='a') as f:
-            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
@@ -119,12 +109,6 @@ elif cfg['dataset'] == 'pascalvoc':
     del val_test_dataset
     del batchify_fn
     gc.collect()
-
-if cfg['write_cpu_and_memory']:
-    with open(os.path.join('collected_results', 'computer_resource_percentages'),
-              mode='a') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
 
 if cfg['even_distribution']:
     pass
@@ -163,9 +147,6 @@ def data_for_polygon(polygons):
     start = time.time()
     image_data_bypolygon = []
     label_data_bypolygon = []
-
-    if cfg['write_cpu_and_memory']:
-        psutil.cpu_percent()
 
     # Do not organize by classes, just divide entire dataset into tenths.
     if cfg['even_distribution']:
@@ -224,11 +205,6 @@ def data_for_polygon(polygons):
                         lists_in_polygon += 1
                 # Sort half of data by class, to assign to polygons later.
                 else:
-                    # Measure performance.
-                    if i == 2:
-                        if cfg['write_cpu_and_memory']:
-                            psutil.cpu_percent()
-
                     # Iterate through each individual element of the batch.
                     for j in range(len(X_quarter)):
                         # Each pascal voc label is an n x 6 ndarray. There are n objects in each datum and the 5th column
@@ -250,11 +226,6 @@ def data_for_polygon(polygons):
 
             # Measure performance of partitioning data into classes
             end = time.time()
-            if cfg['write_cpu_and_memory']:
-                with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                          mode='a') as f:
-                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
             print('Time to partition half of training data into classes:', end - start)
 
             # Print statistics on amount of data in each class.
@@ -324,11 +295,6 @@ def data_for_polygon(polygons):
 
 
     end = time.time()
-    if cfg['write_cpu_and_memory']:
-        with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                  mode='a') as f:
-            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
     print('Time to partition all training data into polygons:', end - start)
 
     return image_data_bypolygon, label_data_bypolygon

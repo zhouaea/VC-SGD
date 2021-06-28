@@ -32,6 +32,7 @@ class Central_Server:
 
     
     def __init__(self, ctx):
+        self.ctx = ctx
         self.net = gluon.nn.Sequential()
         if cfg['dataset'] == 'cifar10':
             with self.net.name_scope():
