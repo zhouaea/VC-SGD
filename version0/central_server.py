@@ -28,6 +28,7 @@ class Central_Server:
     Attributes:
     - model
     - accumulative_gradients
+    - decoded_data_template (if using communication efficient mode)
     """
 
     
@@ -76,6 +77,21 @@ class Central_Server:
         # OR do self.net.load_parameters('models/yolo_x', ctx=ctx)
 
         self.accumulative_gradients = []
+
+        # Load structure of gradients of the specific model being used so RSUs can decode uploaded vehicle data.
+        if cfg['communication']['top_k_enabled']:
+            if cfg['dataset'] == 'mnist':
+                with open('gradient_format/sequential_gradient_format.yml', 'r') as infile:
+                    gradient_structure = yaml.load(infile, Loader=yaml.FullLoader)
+            elif cfg['dataset'] == 'pascalvoc':
+                with open('gradient_format/yolov3_gradient_format.yml', 'r') as infile:
+                    gradient_structure = yaml.load(infile, Loader=yaml.FullLoader)
+
+            self.decoded_data_template = []
+
+            # Create a list of 2D ndarrays with the structure of the model gradients, initialized to 0.
+            for layer_shape in gradient_structure:
+                self.decoded_data_template.append(nd.zeros(layer_shape))
 
     # Update the model with its accumulative gradients
     # Used for batch gradient descent
@@ -139,6 +155,7 @@ class Simulation:
         self.label_data_bypolygon = []
         self.num_round = num_round
         self.virtual_timestep = 0
+
         if cfg['dataset'] == 'pascalvoc':
             self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']))
             with autograd.train_mode():

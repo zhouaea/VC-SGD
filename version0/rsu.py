@@ -1,3 +1,4 @@
+import copy
 import csv
 import os
 import time
@@ -17,15 +18,6 @@ cfg = yaml.load(file, Loader=yaml.FullLoader)
 
 # random.seed(cfg['seed'])
 # np.random.seed(cfg['seed'])
-
-# Load structure of gradients of the specific model being used to decode uploaded vehicle data.
-if cfg['communication']['top_k_enabled']:
-    if cfg['dataset'] == 'mnist':
-        with open('gradient_format/sequential_gradient_format.yml', 'r') as infile:
-            gradient_structure = yaml.load(infile, Loader=yaml.FullLoader)
-    elif cfg['dataset'] == 'pascalvoc':
-        with open('gradient_format/yolov3_gradient_format.yml', 'r') as infile:
-            gradient_structure = yaml.load(infile, Loader=yaml.FullLoader)
 
 class RSU:
     """
@@ -73,17 +65,15 @@ class RSU:
         if len(central_server.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
             central_server.update_model()
 
-    def decode_gradients(self):
+    def decode_gradients(self, central_server):
         """Decode data sent from vehicle"""
         start = time.time()
 
         received_gradient_index = len(self.accumulative_gradients) - 1
         encoded_data = self.accumulative_gradients[received_gradient_index]
-        decoded_data = []
 
-        # Create a list of 2D ndarrays with the structure of the model gradients, initialized to 0.
-        for layer_shape in gradient_structure:
-            decoded_data.append(nd.zeros(layer_shape))
+        # Acquire a new list of 2D ndarrays with the structure of the model gradients, initialized to 0.
+        decoded_data = copy.deepcopy(central_server.decoded_data_template)
 
         # Use the values and indices in the encoded list to change the values of the newly
         # initialized gradient list.
@@ -117,6 +107,7 @@ class RSU:
                 # Change specific element in layer to reflect result obtained from vehicle.
                 decoded_data[layer][reshaped_index] = top_k_values_in_layer[j]
 
+        # Replace encoded data with deocded data.
         self.accumulative_gradients[received_gradient_index] = decoded_data
 
         end = time.time()

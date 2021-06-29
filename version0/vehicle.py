@@ -141,7 +141,6 @@ class Vehicle:
 
             end = time.time()
             print('time to upload gradients', end - start)
-     
 
             if cfg['write_runtime_statistics']:
                 with open(os.path.join('collected_results', 'time_to_upload_gradients'), mode='a') as f:
@@ -152,7 +151,7 @@ class Vehicle:
             del self.gradients
             gc.collect()
 
-            rsu.decode_gradients()
+            rsu.decode_gradients(simulation.central_server)
         # Use normal communication.
         else:
             self.print_gradient_size()
