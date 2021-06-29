@@ -99,7 +99,7 @@ class Central_Server:
 
             if cfg['dataset'] == 'pascalvoc':
                 # Update targets when updating model.
-                self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
+                self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']))
                 with autograd.train_mode():
                     _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
 
@@ -140,7 +140,7 @@ class Simulation:
         self.num_round = num_round
         self.virtual_timestep = 0
         if cfg['dataset'] == 'pascalvoc':
-            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
+            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']))
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.central_server.net(self.fake_x)
             self.target_generator = YOLOV3PrefetchTargetGenerator(

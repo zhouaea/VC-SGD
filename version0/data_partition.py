@@ -27,9 +27,9 @@ cfg = yaml.load(file, Loader=yaml.FullLoader)
 def transform(data, label):
     if cfg['dataset'] == 'pascalvoc':
         h, w, _ = data.shape
-        data = data_resize(data, cfg['neural_network']['height'], cfg['neural_network']['width'])
+        data = data_resize(data, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width'])
         label = label_bbox_resize(label, in_size=(w, h),
-                                  out_size=(cfg['neural_network']['width'], cfg['neural_network']['height']))
+                                  out_size=(cfg['pascalvoc_metrics']['width'], cfg['pascalvoc_metrics']['height']))
         label = label.astype(np.float32)
         # Pad to 56 objects, better to do it here than to pad with an ndarray according to the documentation.
         label = np.pad(label, ((0, 56 - len(label)), (0, 0)), 'constant', constant_values=-1)

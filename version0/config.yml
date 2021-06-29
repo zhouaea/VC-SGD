@@ -22,15 +22,14 @@ neural_network:
   epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
-  # only for yolo model
-  # the yolo models provided by gluon require either 320 x 320 or 416 x 416, each model only supports one size
-  height: 320
-  width: 320
 
 seed: 99
 
 pascalvoc_metrics:
   iou_threshold: 0.01
+  # the yolo models provided by gluon require either 320 x 320 or 416 x 416, each model only supports one size
+  height: 320
+  width: 320
 
 communication:
   # Write the size of each set of gradients transmitted from a vehicle to an RSU
