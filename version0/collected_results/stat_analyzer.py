@@ -8,7 +8,7 @@ runtime_writing_enabled = cfg['write_runtime_statistics']
 
 runtimes = []
 
-runtime_filenames = ['time_to_upload_and_receive_gradients', 'time_to_decode_gradients', 'time_to_print_gradients', 'time_to_encode_gradients', ]
+runtime_filenames = ['time_to_upload_and_receive_gradients']
 
 if runtime_writing_enabled is True:
     for filename in runtime_filenames:
@@ -30,11 +30,11 @@ if runtime_writing_enabled is True:
     with open('gradient_sizes') as log:
         line = log.readline()
         while line != '':
-            runtimes.append(float(line))
+            gradient_sizes.append(float(line))
             line = log.readline()
 
-            print("Median and average gradient size in bytes:")
-            print(str(np.percentile(runtimes, 50)) + ", " + str(np.average(runtimes)))
+    print("Median and average gradient size in bytes:")
+    print(str(np.percentile(runtimes, 50)) + ", " + str(np.average(runtimes)))
 
-            print("Number of gradients delivered:")
-            print(len(gradient_sizes))
+    print("Number of gradients delivered:")
+    print(len(gradient_sizes))
