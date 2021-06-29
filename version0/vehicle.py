@@ -126,16 +126,27 @@ class Vehicle:
         self.gradients = grad_collect
 
     def upload(self, simulation, closest_rsu):
-        start = time.time()
+        total_start = time.time()
 
         # Send only the top k gradients in each layer of the network to save communication costs.
         if cfg['communication']['top_k_enabled']:
             self.encode_gradients()
             self.print_gradient_size()
 
+            start = time.time()
+
             # Upload data to RSU
             rsu = closest_rsu
             rsu.accumulative_gradients.append(self.gradients)
+
+            end = time.time()
+            print('time to upload gradients', end - start)
+     
+
+            if cfg['write_runtime_statistics']:
+                with open(os.path.join('collected_results', 'time_to_upload_gradients'), mode='a') as f:
+                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    writer.writerow([end - start])
 
             # Save memory by deleting gradients from vehicle after upload.
             del self.gradients
@@ -149,14 +160,14 @@ class Vehicle:
             rsu = closest_rsu
             rsu.accumulative_gradients.append(self.gradients)
 
-        end = time.time()
-        print('time to upload and receive gradients for one batch:', end-start)
-        print('CPU %:', psutil.cpu_percent())
+        total_end = time.time()
+        print('time to upload and receive gradients for one batch:', total_end - total_start)
+ 
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_upload_and_receive_gradients'), mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([end - start])
+                writer.writerow([total_end - total_start])
 
         # RSU checks if enough gradients collected
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
@@ -208,6 +219,8 @@ class Vehicle:
         raise Exception('Vehicle not in any polygon')
 
     def encode_gradients(self):
+        start = time.time()
+
         """Find the top-k gradients for each layer and encode them."""
         top_k_gradients = []
         for layer in self.gradients:
@@ -218,8 +231,18 @@ class Vehicle:
         # Overwrite other gradients.
         self.gradients = top_k_gradients
 
+        end = time.time()
+        print('time to encode gradients', end - start)
+
+        if cfg['write_runtime_statistics']:
+            with open(os.path.join('collected_results', 'time_to_encode_gradients'), mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([end - start])
+
     def print_gradient_size(self):
         """Measure how much data is being transmitted from vehicle to gradient"""
+        start = time.time()
+
         bytes_used = 0
 
         # Calculate number of bytes used in encoded data
@@ -238,3 +261,11 @@ class Vehicle:
             with open(os.path.join('collected_results', 'gradient_sizes'), mode='a') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 writer.writerow([bytes_used])
+
+        end = time.time()
+        print('time to print gradients', end - start)
+
+        if cfg['write_runtime_statistics']:
+            with open(os.path.join('collected_results', 'time_to_print_gradients'), mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([end - start])

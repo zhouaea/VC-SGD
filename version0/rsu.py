@@ -1,4 +1,10 @@
-from neural_network import Neural_Network 
+import csv
+import os
+import time
+
+import psutil
+
+from neural_network import Neural_Network
 import byz
 import nd_aggregation
 import numpy as np
@@ -69,6 +75,8 @@ class RSU:
 
     def decode_gradients(self):
         """Decode data sent from vehicle"""
+        start = time.time()
+
         received_gradient_index = len(self.accumulative_gradients) - 1
         encoded_data = self.accumulative_gradients[received_gradient_index]
         decoded_data = []
@@ -110,3 +118,11 @@ class RSU:
                 decoded_data[layer][reshaped_index] = top_k_values_in_layer[j]
 
         self.accumulative_gradients[received_gradient_index] = decoded_data
+
+        end = time.time()
+        print('time to decode gradients', end - start)
+
+        if cfg['write_runtime_statistics']:
+            with open(os.path.join('collected_results', 'time_to_decode_gradients'), mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([end - start])
