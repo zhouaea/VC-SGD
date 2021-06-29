@@ -74,7 +74,7 @@ class Central_Server:
             self.net = get_model('yolo3_mobilenet1.0_voc', pretrained=False)
 
         self.net.initialize(mx.init.Xavier(), ctx=ctx, force_reinit=True)
-        # OR do self.net.load_parameters('models/yolo_x', ctx=ctx)
+        # OR do self.net.load_parameters('models/model_x', ctx=ctx)
 
         self.accumulative_gradients = []
 
@@ -93,12 +93,9 @@ class Central_Server:
             for layer_shape in gradient_structure:
                 self.decoded_data_template.append(nd.zeros(layer_shape))
 
-    # Update the model with its accumulative gradients
-    # Used for batch gradient descent
-    
+
     def update_model(self):
-        if cfg['write_cpu_and_memory']:
-            psutil.cpu_percent()
+        """Update the model with its accumulative gradients. Used for batch gradient descent"""
         if len(self.accumulative_gradients) >= 10:
             param_list = [nd.concat(*[xx.reshape((-1, 1)) for xx in x], dim=0) for x in self.accumulative_gradients]
             mean_nd = nd.mean(nd.concat(*param_list, dim=1), axis=-1)
@@ -119,12 +116,6 @@ class Central_Server:
                 with autograd.train_mode():
                     _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
 
-            if cfg['write_cpu_and_memory']:
-                with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                          mode='a') as f:
-                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
-
 
 class Simulation:
     """
@@ -135,7 +126,6 @@ class Simulation:
     - rsu_list
     - dataset
     """
-
     
     def __init__(self, FCD_file, vehicle_dict: dict, rsu_list: list, vc_list: list, polygons, central_server,
                  num_round):
@@ -179,8 +169,6 @@ class Simulation:
 
     
     def get_accu_loss(self):
-        if cfg['write_cpu_and_memory']:
-            psutil.cpu_percent()
         # accuracy on testing data
         start_for_all_data = time.time()
         for (data, label) in self.val_test_data:
@@ -199,13 +187,6 @@ class Simulation:
                 # this following line takes EXTREMELY LONG to run
                 self.epoch_accuracy.update(label, outputs)
             end = time.time()
-
-            if cfg['write_runtime_statistics']:
-                with open(os.path.join('collected_results', 'time_to_calculate_accuracy_on_one_datum'), mode='a') as f:
-                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([end - start])
-        print('time to calculate accuracy for', cfg['num_test_data'], 'test data:', end-start_for_all_data)
-
 
         start_for_all_data = time.time()
         # cross entropy on training data
@@ -242,11 +223,6 @@ class Simulation:
                     writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow([end - start])
 
-        if cfg['write_cpu_and_memory']:
-            with open(os.path.join('collected_results', 'computer_resource_percentages'),
-                      mode='a') as f:
-                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
         print('time it takes to calculate loss for', cfg['num_val_train_data'], 'validation data', end-start_for_all_data)
 
     def print_accuracy(self, epoch_runtime, virtual_time_step):
@@ -298,20 +274,15 @@ class Simulation:
         with open(p, mode='a') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             if cfg['dataset'] == 'pascalvoc':
-                if self.num_epoch == 1:
+                if self.num_epoch == 5:
                     writer.writerow(['Epoch number', 'Epoch Runtime', 'Virtual Time Step', 'Accuracy (By class), IOU Thresh is ' + str(cfg['pascalvoc_metrics']['iou_threshold']), 'Loss', 'Object Loss', 'Center Loss', 'Scale Loss', 'CLS Loss', 'Aggregation Method', 'Attack Type'])
                 writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, losses[0], losses[1], losses[2], losses[3], cfg['aggregation_method'], cfg['attack']])
             else:
-                if self.num_epoch == 1:
+                if self.num_epoch == 5:
                     writer.writerow(['Epoch number', 'Epoch Runtime', 'Virtual Time Step', 'Accuracy', 'Loss', 'Aggregation Method', 'Attack Type'])
                 writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, cfg['aggregation_method'], cfg['attack']])
 
-
-    def new_epoch(self, *args):
-        if len(args) != 0:
-            epoch_runtime = args[0]
-            virtual_time_step = args[1]
-
+    def new_epoch(self, epoch_runtime, virtual_time_step):
         if self.num_epoch != 0:
             print('Epoch', self.num_epoch, 'runtime:', epoch_runtime)
 
@@ -319,13 +290,26 @@ class Simulation:
         if self.num_epoch != 0 and self.num_epoch % 5 == 0:
             self.print_accuracy(epoch_runtime, virtual_time_step)
 
+        # Save model every 10 epochs
         if self.num_epoch != 0 and self.num_epoch % 10 == 0:
             if not os.path.exists('models'):
                 os.makedirs('models')
-            filename = 'models/yolo_' + str(self.num_epoch)
+
+            if cfg['dataset'] == 'pascalvoc':
+                filename = 'models/yolo_' + str(self.num_epoch)
+            elif cfg['dataset'] == 'mnist':
+                filename = 'models/6_layer_sequential_' + str(self.num_epoch)
+            else:
+                filename = 'models/some_model_' + str(self.num_epoch)
+
             self.central_server.net.save_parameters(filename)
 
         self.num_epoch += 1
+
+        # Exit after all epochs are completed, so data does not have to be repartitioned before the simulation exits.
+        if self.num_epoch > cfg['neural_network']['epoch']:
+            exit()
+
         print("partitioning data...")
         self.image_data_bypolygon, self.label_data_bypolygon = data_for_polygon(self.polygons)
         self.current_batch_index_by_polygon = [0 for i in range(len(self.polygons))]
