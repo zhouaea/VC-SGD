@@ -19,9 +19,10 @@ simulation:
 
 neural_network:
   batch_size: 100
-  epoch: 10
+  epoch: 100
   # cifar lr = 0.0005
   learning_rate: 0.0005
+  # only for yolo model
   # the yolo models provided by gluon require either 320 x 320 or 416 x 416, each model only supports one size
   height: 320
   width: 320
@@ -35,7 +36,7 @@ communication:
   # Write the size of each set of gradients transmitted from a vehicle to an RSU
   write_gradient_size: true
   # Only the top gradients from each layer of the network will be sent from vehicle to RSU.
-  top_k_enabled: true
+  top_k_enabled: false
   k: 3
 
 
@@ -54,10 +55,11 @@ even_distribution: false
 # mnist, cifar10, pascalvoc
 dataset: 'mnist'
 # 60000 for mnist, 16551 for pascalvoc
-num_training_data: 60000 # minimum batch size is 40, since we load in quarters and divide by 10
-num_val_train_data: 5000
+# minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
+num_training_data: 60000
+num_val_train_data: 60000
 num_test_data: 60000
-test_and_val_train_batch_size: 16
+test_and_val_train_batch_size: 100
 
 
 aggregation_method: 'simplemean' # simplemean, cgc

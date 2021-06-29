@@ -120,7 +120,6 @@ class RSU:
         self.accumulative_gradients[received_gradient_index] = decoded_data
 
         end = time.time()
-        print('time to decode gradients', end - start)
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_decode_gradients'), mode='a') as f:

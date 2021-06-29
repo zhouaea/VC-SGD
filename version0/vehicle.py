@@ -232,7 +232,6 @@ class Vehicle:
         self.gradients = top_k_gradients
 
         end = time.time()
-        print('time to encode gradients', end - start)
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_encode_gradients'), mode='a') as f:
@@ -263,7 +262,6 @@ class Vehicle:
                 writer.writerow([bytes_used])
 
         end = time.time()
-        print('time to print gradients', end - start)
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_print_gradients'), mode='a') as f:

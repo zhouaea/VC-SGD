@@ -97,10 +97,11 @@ class Central_Server:
                     idx += param.data().size
             self.accumulative_gradients = []
 
-            # Update targets when updating model.
-            self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
-            with autograd.train_mode():
-                _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
+            if cfg['dataset'] == 'pascalvoc':
+                # Update targets when updating model.
+                self.fake_x = mx.nd.zeros((cfg['neural_network']['batch_size'], 3, cfg['neural_network']['height'], cfg['neural_network']['width']))
+                with autograd.train_mode():
+                    _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
 
             if cfg['write_cpu_and_memory']:
                 with open(os.path.join('collected_results', 'computer_resource_percentages'),
