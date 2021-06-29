@@ -67,7 +67,7 @@ def extract_batch_from_polygon(simulation, polygon_index):
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
-    simulation.new_epoch()
+    simulation.new_epoch(0, 0)
     data_last_found = None
     epoch_runtime_start = time.time()
 
