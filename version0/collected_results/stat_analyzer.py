@@ -8,7 +8,7 @@ runtime_writing_enabled = cfg['write_runtime_statistics']
 
 runtimes = []
 
-runtime_filenames = ['time_to_upload_and_receive_gradients']
+runtime_filenames = ['time_to_upload_and_receive_gradients', 'time_to_encode_gradients', 'time_to_upload_gradients', 'time_to_decode_gradients']
 
 if runtime_writing_enabled is True:
     for filename in runtime_filenames:
