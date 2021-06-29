@@ -129,7 +129,7 @@ class Vehicle:
         total_start = time.time()
 
         # Send only the top k gradients in each layer of the network to save communication costs.
-        if cfg['communication']['top_k_enabled']:
+        if cfg['communication']['top_k_enabled'] or cfg['communication']['send_random_k_layers']:
             self.encode_gradients()
             self.print_gradient_size()
 
@@ -140,7 +140,6 @@ class Vehicle:
             rsu.accumulative_gradients.append(self.gradients)
 
             end = time.time()
-            print('time to upload gradients', end - start)
 
             if cfg['write_runtime_statistics']:
                 with open(os.path.join('collected_results', 'time_to_upload_gradients'), mode='a') as f:
@@ -218,14 +217,18 @@ class Vehicle:
         raise Exception('Vehicle not in any polygon')
 
     def encode_gradients(self):
+        """Find the top-k gradients for each layer and encode them."""
+
         start = time.time()
 
-        """Find the top-k gradients for each layer and encode them."""
-        top_k_gradients = []
-        for layer in self.gradients:
-            # This function will return a 2d ndarray where row 0 has k values and row 1 has
-            # k flattened indices. Ex: The last index of a 3 x 3 array would be 8 when flattened.
-            top_k_gradients.append(nd.topk(layer, axis=None, k=cfg['communication']['k'], ret_typ='both'))
+        if cfg['communication']['top_k_enabled']:
+            top_k_gradients = []
+            for layer in self.gradients:
+                # This function will return a 2d ndarray where row 0 has k values and row 1 has
+                # k flattened indices. Ex: The last index of a 3 x 3 array would be 8 when flattened.
+                top_k_gradients.append(nd.topk(layer, axis=None, k=cfg['communication']['k'], ret_typ='both'))
+        elif cfg['communication']['send_random_k_layers']:
+            pass
 
         # Overwrite other gradients.
         self.gradients = top_k_gradients
@@ -243,13 +246,16 @@ class Vehicle:
 
         bytes_used = 0
 
-        # Calculate number of bytes used in encoded data
+        # Calculate number of bytes used in encoded gradients.
         if cfg['communication']['top_k_enabled']:
             for layer in self.gradients:
                 # Each encoded layer is a list of 2 mxnet ndarrays. Thus, we count the elements in 
                 # one of the ndarrays, multiply by the size in bytes of its datatype (float32), and
                 # multiply by 2 since both mxnet ndarrays are of the same length and datatype
                 bytes_used += layer[0].size * 32 * 2
+        elif cfg['communication']['send_random_k_layers']:
+            pass
+        # Calculate number of bytes used in regular gradients.
         else:
             for layer in self.gradients:
                 # Each layer is a one-dimensional to multidimensional ndarray.
