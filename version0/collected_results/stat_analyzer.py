@@ -34,7 +34,7 @@ if runtime_writing_enabled is True:
             line = log.readline()
 
     print("Median and average gradient size in bytes:")
-    print(str(np.percentile(runtimes, 50)) + ", " + str(np.average(runtimes)))
+    print(str(np.percentile(gradient_sizes, 50)) + ", " + str(np.average(gradient_sizes)))
 
     print("Number of gradients delivered:")
     print(len(gradient_sizes))
