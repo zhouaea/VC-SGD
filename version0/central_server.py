@@ -232,7 +232,6 @@ class Simulation:
                 writer.writerow([psutil.cpu_percent(), psutil.virtual_memory().percent])
         print('time it takes to calculate loss for', cfg['num_val_train_data'], 'validation data', end-start_for_all_data)
 
-    
     def print_accuracy(self, epoch_runtime, virtual_time_step):
         self.epoch_accuracy.reset()
         if cfg['dataset'] == 'pascalvoc':
@@ -266,7 +265,7 @@ class Simulation:
                     obj_loss, center_loss, scale_loss, cls_loss))
         else:
             _, loss = self.epoch_loss.get()
-            self.save_data(accu, loss, virtual_time_step)
+            self.save_data(accu, loss, epoch_runtime, virtual_time_step)
             print("Epoch {:03d}: Loss: {:03f}, Accuracy: {:03f}\n".format(self.num_epoch,
                                                                           loss,
                                                                           accu))
@@ -286,6 +285,8 @@ class Simulation:
                     writer.writerow(['Epoch number', 'Epoch Runtime', 'Virtual Time Step', 'Accuracy (By class), IOU Thresh is ' + str(cfg['pascalvoc_metrics']['iou_threshold']), 'Loss', 'Object Loss', 'Center Loss', 'Scale Loss', 'CLS Loss', 'Aggregation Method', 'Attack Type'])
                 writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, losses[0], losses[1], losses[2], losses[3], cfg['aggregation_method'], cfg['attack']])
             else:
+                if self.num_epoch == 1:
+                    writer.writerow(['Epoch number', 'Epoch Runtime', 'Virtual Time Step', 'Accuracy', 'Loss', 'Aggregation Method', 'Attack Type'])
                 writer.writerow([self.num_epoch, epoch_runtime, virtual_time_step, accu, loss, cfg['aggregation_method'], cfg['attack']])
 
 
