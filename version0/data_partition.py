@@ -144,7 +144,6 @@ def data_for_polygon(polygons):
         Returns training data and labels for new epochs.
     """
     NUM_POLYGONS = len(polygons)
-    start = time.time()
     image_data_bypolygon = []
     label_data_bypolygon = []
 
@@ -180,9 +179,18 @@ def data_for_polygon(polygons):
             lists_in_polygon = 0
             current_polygon = 0
 
+            # Out of the 4 batches of total training data, how many batches are randomized?
+            if cfg['dataset_random_distribution'] == 0.5:
+                random_data_proportion_index = 2
+            elif cfg['dataset_random_distribution'] == 0.25:
+                random_data_proportion_index = 1
+            else:
+                print("ERROR: Please select either 0.5 or 0.25 for dataset_random_distribution in config.yml")
+                exit()
+
             for i, (X_quarter, y_quarter) in enumerate(train_data):
                 # Assign half of data ("random data") to polygons (two lists per polygon)
-                if i < 2:
+                if i < random_data_proportion_index:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
                                 len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
                     # Divide the quarters into tenths, add two tenths to every polygon
@@ -226,7 +234,6 @@ def data_for_polygon(polygons):
 
             # Measure performance of partitioning data into classes
             end = time.time()
-            print('Time to partition half of training data into classes:', end - start)
 
             # Print statistics on amount of data in each class.
             if cfg['dataset'] == 'pascalvoc':
@@ -292,9 +299,5 @@ def data_for_polygon(polygons):
                 X_new, y_new = shuffle(np.array(X_new), np.array(y_new))
                 image_data_bypolygon.append(X_new.tolist())
                 label_data_bypolygon.append(y_new.tolist())
-
-
-    end = time.time()
-    print('Time to partition all training data into polygons:', end - start)
 
     return image_data_bypolygon, label_data_bypolygon
