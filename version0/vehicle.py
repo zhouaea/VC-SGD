@@ -160,7 +160,6 @@ class Vehicle:
 
         total_end = time.time()
         print('time to upload and receive gradients for one batch:', total_end - total_start)
- 
 
         if cfg['write_runtime_statistics']:
             with open(os.path.join('collected_results', 'time_to_upload_and_receive_gradients'), mode='a') as f:
