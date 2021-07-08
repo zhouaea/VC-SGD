@@ -18,15 +18,15 @@ simulation:
   maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
 
 neural_network:
-  batch_size: 100
-  epoch: 100
+  batch_size: 32
+  epoch: 3
   # cifar lr = 0.0005
   learning_rate: 0.0005
 
 seed: 99
 
 pascalvoc_metrics:
-  iou_threshold: 0.01
+  iou_threshold: 0.3
   # the yolo models provided by gluon require either 320 x 320 or 416 x 416, each model only supports one size
   height: 320
   width: 320
@@ -56,14 +56,13 @@ even_distribution: false
 
 # ********* frequently changed parameters ***************
 # mnist, cifar10, pascalvoc
-dataset: 'mnist'
+dataset: 'pascalvoc'
 # percentage of data in each zone that is random (not organized by classes)
 dataset_random_distribution: 0.5
 # 60000 for mnist, 16551 for pascalvoc
-num_training_data: 60000 # minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
-num_val_train_data: 60000
-num_test_data: 60000
-test_and_val_train_batch_size: 100
+num_training_data: 2000 # minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
+num_val_train_data: 2000
+num_test_data: 4952
 
 
 aggregation_method: 'simplemean' # simplemean, cgc

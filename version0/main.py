@@ -17,9 +17,11 @@ from mxnet import nd, autograd, gluon
 from mxnet.gluon.data.vision import transforms
 from gluoncv.data import transforms as gcv_transforms
 import numpy as np
+
 import time, random, argparse, itertools
 import pickle
 from memory_profiler import profile
+import sys
 
 
 def parse_args():
@@ -31,8 +33,6 @@ def parse_args():
     opt = parser.parse_args()
     return opt
 
-
-import sys
 
 print(' '.join(sys.argv))
 
@@ -80,13 +80,6 @@ def simulate(simulation):
         # For each time step (sec) in the FCD file 
         for timestep in root:
 
-            # The number of epochs does not necessarily correlate with a full simulation of the FCD file.
-            if simulation.num_epoch > cfg['neural_network']['epoch']:
-                break
-
-            if float(timestep.attrib['time']) % 200 == 0:
-                print(timestep.attrib['time'])
-
             vc_vehi_count = [0 for vc in simulation.vc_list]
             # For each vehicle on the map at the timestep (Find available vehicular clouds)
             for vehicle in timestep.findall('vehicle'):
@@ -119,22 +112,26 @@ def simulate(simulation):
                 if polygon_index not in vehi.training_data_assigned:
                     # There is still data in this epoch. If each polygon has data but less than the batch
                     # size, discard them.
-                    if ((cfg['dataset'] != 'pascalvoc') and (any(len(x) >= BATCH_SIZE for x in simulation.image_data_bypolygon))) or ((any(
+                    if ((cfg['dataset'] != 'pascalvoc') and (
+                    any(len(x) >= BATCH_SIZE for x in simulation.image_data_bypolygon))) or ((any(
                             (current_batch_index + 1) * BATCH_SIZE <= len(simulation.image_data_bypolygon[i]) for
                             i, current_batch_index in enumerate(simulation.current_batch_index_by_polygon))) and (
-                            cfg['dataset'] == 'pascalvoc')):
+                                                                                                     cfg[
+                                                                                                         'dataset'] == 'pascalvoc')):
                         # There is still enough data in this polygon.
                         if (cfg['dataset'] != 'pascalvoc' and len(
                                 simulation.image_data_bypolygon[polygon_index]) >= BATCH_SIZE) or (
                                 cfg['dataset'] == 'pascalvoc' and (
                                 (simulation.current_batch_index_by_polygon[polygon_index] + 1) * BATCH_SIZE <= len(
-                                simulation.image_data_bypolygon[polygon_index]))):
+                            simulation.image_data_bypolygon[polygon_index]))):
 
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
                                                                                                          polygon_index)
 
                             if cfg['dataset'] == 'pascalvoc':
-                                print([len(image_data_in_polygon) - simulation.current_batch_index_by_polygon[i] * BATCH_SIZE for i, image_data_in_polygon in enumerate(simulation.image_data_bypolygon)])
+                                print([len(image_data_in_polygon) - simulation.current_batch_index_by_polygon[
+                                    i] * BATCH_SIZE for i, image_data_in_polygon in
+                                       enumerate(simulation.image_data_bypolygon)])
                             else:
                                 print([len(x) for x in simulation.image_data_bypolygon])
 
@@ -142,7 +139,8 @@ def simulate(simulation):
                                 training_data_assigned, training_label_assigned)
                     else:
                         epoch_runtime_end = time.time()
-                        simulation.new_epoch(epoch_runtime_end - epoch_runtime_start, simulation.virtual_timestep + float(timestep.attrib['time']))
+                        simulation.new_epoch(epoch_runtime_end - epoch_runtime_start,
+                                             simulation.virtual_timestep + float(timestep.attrib['time']))
                         epoch_runtime_start = time.time()
                         if len(simulation.image_data_bypolygon[polygon_index]) >= BATCH_SIZE:
                             training_data_assigned, training_label_assigned = extract_batch_from_polygon(simulation,
@@ -164,8 +162,6 @@ def simulate(simulation):
 
 def main():
     print('initializing simulation...')
-    print('Batch Size:', cfg['neural_network']['batch_size'])
-    print('Training Data:', cfg['num_training_data'])
 
     opt = parse_args()
 
@@ -195,47 +191,11 @@ def main():
     rsu_list = location_list[:NUM_RSU]
     vc_list = location_list[NUM_RSU:]
 
-    # Proitize VC locations
-    # rsu_list = location_list[NUM_VC:]
-    # vc_list = location_list[:NUM_VC]
-
     central_server = Central_Server(context)
-
-    # def transform(data, label):
-    #     if cfg['dataset'] == 'cifar10':
-    #         data = mx.nd.transpose(data, (2,0,1))
-    #     data = data.astype(np.float32) / 255
-    #     return data, label
-
-    # # Load Data
-    # batch_size = cfg['neural_network']['batch_size']
-    # num_training_data = cfg['num_training_data']
-    # if cfg['dataset'] == 'cifar10':
-    #     train_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.CIFAR10('../data/cx2', train=True, transform=transform).take(num_training_data),
-    #                             batch_size, shuffle=True, last_batch='discard')
-    #     val_train_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.CIFAR10('../data/cx2', train=True, transform=transform).take(cfg['num_val_loss']),
-    #                                 batch_size, shuffle=False, last_batch='keep')
-    #     val_test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.CIFAR10('../data/cx2', train=False, transform=transform),
-    #                                 batch_size, shuffle=False, last_batch='keep')
-    # elif cfg['dataset'] == 'mnist':
-    #     train_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST('../data/mnist', train=True, transform=transform).take(num_training_data),
-    #                             batch_size, shuffle=True, last_batch='discard')
-    #     val_train_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST('../data/mnist', train=True, transform=transform).take(cfg['num_val_loss']),
-    #                                 batch_size, shuffle=False, last_batch='keep')
-    #     val_test_data = mx.gluon.data.DataLoader(mx.gluon.data.vision.MNIST('../data/mnist', train=False, transform=transform),
-    #                                 batch_size, shuffle=False, last_batch='keep')
 
     # simulation = Simulation(FCD_FILE, vehicle_dict, rsu_list, vc_list, polygons, central_server, train_data, val_train_data, val_test_data, num_round)
     simulation = Simulation(FCD_FILE, vehicle_dict, rsu_list, vc_list, polygons, central_server, num_round)
     model = simulate(simulation)
-
-    # # Test the accuracy of the computed model
-    # test_accuracy = tf.keras.metrics.Accuracy()     
-    # for (x, y) in test_dataset:
-    #     logits = model(x, training=False) 
-    #     prediction = tf.argmax(logits, axis=1, output_type=tf.int32)
-    #     test_accuracy(prediction, y)
-    # print("Test set accuracy: {:.3%}".format(test_accuracy.result()))
 
 
 if __name__ == '__main__':

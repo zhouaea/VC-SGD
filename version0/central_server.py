@@ -172,7 +172,6 @@ class Simulation:
         # accuracy on testing data
         start_for_all_data = time.time()
         for (data, label) in self.val_test_data:
-            start = time.time()
             if cfg['dataset'] == 'pascalvoc':
                 outputs = self.central_server.net(data)
                 pred_object_class_indices = outputs[:][0]
@@ -186,12 +185,13 @@ class Simulation:
                 outputs = self.central_server.net(data)
                 # this following line takes EXTREMELY LONG to run
                 self.epoch_accuracy.update(label, outputs)
-            end = time.time()
+        end = time.time()
+        print('time it takes to calculate accuracy for', cfg['num_test_data'], 'test data',
+              end - start_for_all_data)
 
         start_for_all_data = time.time()
         # cross entropy on training data
         for data, label in self.val_train_data:
-            start = time.time()
             if cfg['dataset'] == 'pascalvoc':
                 # Acquire all variables required to calculate loss.
                 gt_bboxes = mx.nd.array(label[:, :, :4]).astype(np.float32)
@@ -217,11 +217,6 @@ class Simulation:
             else:
                 outputs = self.central_server.net(data)
                 self.epoch_loss.update(label, nd.softmax(outputs))
-            end = time.time()
-            if cfg['write_runtime_statistics']:
-                with open(os.path.join('collected_results', 'time_to_calculate_loss_on_one_datum'), mode='a') as f:
-                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([end - start])
 
         print('time it takes to calculate loss for', cfg['num_val_train_data'], 'validation data', end-start_for_all_data)
 
@@ -251,17 +246,9 @@ class Simulation:
             sum_loss = np.array(self.sum_losses).mean()
 
             self.save_data(accu, sum_loss, epoch_runtime, virtual_time_step, obj_loss, center_loss, scale_loss, cls_loss)
-            print(
-                "Epoch {:03d}: Loss: {:03f}, Accuracy: {}, Epoch Runtime: {}, Virtual Time Step: {}, Object Loss: {:03f}, Center Loss: {:03f}, Scale Loss: {:03f}, CLS Loss: {:03f}\n".format(
-                    self.num_epoch,
-                    sum_loss, accu, epoch_runtime, virtual_time_step,
-                    obj_loss, center_loss, scale_loss, cls_loss))
         else:
             _, loss = self.epoch_loss.get()
             self.save_data(accu, loss, epoch_runtime, virtual_time_step)
-            print("Epoch {:03d}: Loss: {:03f}, Accuracy: {:03f}\n".format(self.num_epoch,
-                                                                          loss,
-                                                                          accu))
 
     
     def save_data(self, accu, loss, epoch_runtime, virtual_time_step, *losses):
@@ -285,6 +272,9 @@ class Simulation:
     def new_epoch(self, epoch_runtime, virtual_time_step):
         if self.num_epoch != 0:
             print('Epoch', self.num_epoch, 'runtime:', epoch_runtime)
+            with open(os.path.join('collected_results', 'epoch_runtime'), mode='a') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([epoch_runtime])
 
         # Calculate accuracy and loss every 5 epochs.
         if self.num_epoch != 0 and self.num_epoch % 5 == 0:

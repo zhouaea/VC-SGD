@@ -81,6 +81,7 @@ class Vehicle:
             self.training_label.append(nd.array(combined_label[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]))
 
     def compute(self, simulation, closest_rsu, *args):
+        start = time.time()
         if cfg['dataset'] != 'pascalvoc':
             neural_net = Neural_Network()
         
@@ -124,27 +125,20 @@ class Vehicle:
                 grad_collect.append(param.grad().copy())
 
         self.gradients = grad_collect
+        end = time.time()
+        with open(os.path.join('collected_results', 'time_to_upload_gradients'), mode='a') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([end - start])
 
     def upload(self, simulation, closest_rsu):
-        total_start = time.time()
-
         # Send only the top k gradients in each layer of the network to save communication costs.
         if cfg['communication']['top_k_enabled'] or cfg['communication']['send_random_k_layers']:
             self.encode_gradients()
             self.print_gradient_size()
 
-            start = time.time()
-
             # Upload data to RSU
             rsu = closest_rsu
             rsu.accumulative_gradients.append(self.gradients)
-
-            end = time.time()
-
-            if cfg['write_runtime_statistics']:
-                with open(os.path.join('collected_results', 'time_to_upload_gradients'), mode='a') as f:
-                    writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerow([end - start])
 
             # Save memory by deleting gradients from vehicle after upload.
             del self.gradients
@@ -153,18 +147,8 @@ class Vehicle:
             rsu.decode_gradients(simulation.central_server)
         # Use normal communication.
         else:
-            self.print_gradient_size()
-
             rsu = closest_rsu
             rsu.accumulative_gradients.append(self.gradients)
-
-        total_end = time.time()
-        print('time to upload and receive gradients for one batch:', total_end - total_start)
-
-        if cfg['write_runtime_statistics']:
-            with open(os.path.join('collected_results', 'time_to_upload_and_receive_gradients'), mode='a') as f:
-                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([total_end - total_start])
 
         # RSU checks if enough gradients collected
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
@@ -233,11 +217,6 @@ class Vehicle:
         self.gradients = top_k_gradients
 
         end = time.time()
-
-        if cfg['write_runtime_statistics']:
-            with open(os.path.join('collected_results', 'time_to_encode_gradients'), mode='a') as f:
-                writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([end - start])
 
     def print_gradient_size(self):
         """Measure how much data is being transmitted from vehicle to gradient"""
