@@ -6,9 +6,6 @@ from mxnet import gluon, nd, autograd
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
 batch_size = cfg['neural_network']['batch_size']
-warm_up_epochs = cfg['neural_network']['warm_up_epochs']
-updates_per_epoch = ((cfg['num_training_data'] / batch_size) / cfg['simulation']['maximum_rsu_accumulative_gradients']) / cfg['simulation']['maximum_central_server_accumulative_gradients']
-total_number_of_warmup_updates = round(warm_up_epochs * updates_per_epoch)
 # np.random.seed(cfg['seed'])
 
 class Central_Server:
@@ -24,11 +21,7 @@ class Central_Server:
     def __init__(self, ctx):
         self.ctx = ctx
         self.num_epoch = 0
-        self.warmup_updates = 0
-        self.target_lr = cfg['neural_network']['learning_rate']
-        self.lr = 0
-        # The learning rate should increase linearly from 0 to the target lr with each update.
-        self.delta_lr = self.target_lr / total_number_of_warmup_updates
+        self.lr = cfg['neural_network']['learning_rate']
         self.net = gluon.nn.Sequential()
         if cfg['dataset'] == 'cifar10':
             with self.net.name_scope():
@@ -105,18 +98,8 @@ class Central_Server:
                     idx += param.data().size
             self.accumulative_gradients = []
 
-            # If in a warm up epoch, increment learning rate.
-            self.warmup_learning_rate()
-
             if cfg['dataset'] == 'pascalvoc':
                 # Update targets when updating model.
                 self.fake_x = mx.nd.zeros((batch_size, 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']))
                 with autograd.train_mode():
                     _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)
-
-    # Implement warm up epochs and learning rate decay.
-    def warmup_learning_rate(self):
-        print('learning rate increased')
-        # Start with a learning rate of 0 and slowly increase to target learning rate for a certain # of epochs.
-        if self.warmup_updates < total_number_of_warmup_updates:
-            self.lr += self.delta_lr

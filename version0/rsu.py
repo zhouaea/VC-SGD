@@ -64,7 +64,7 @@ class RSU:
         self.accumulative_gradients = []
         central_server.accumulative_gradients.append(aggre_gradients)
         # if enough gradients accumulated in cloud, then update model
-        if len(central_server.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
+        if len(central_server.accumulative_gradients) >= cfg['simulation']['maximum_central_server_accumulative_gradients']:
             central_server.update_model()
 
     def decode_gradients(self, central_server):
