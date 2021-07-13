@@ -4,3 +4,7 @@ Epoch number,Epoch Runtime,Virtual Time Step,"Accuracy (By class), IOU Thresh is
 5,51.651695251464844,2428.0,"[nan, nan, nan, nan, nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0]",4917.241,4855.1353,7.5294313,8.564255,46.012737,simplemean,noattack
 Epoch number,Epoch Runtime,Virtual Time Step,"Accuracy (By class), IOU Thresh is 0.3",Loss,Object Loss,Center Loss,Scale Loss,CLS Loss,Aggregation Method,Attack Type
 5,49.50439715385437,2499.0,"[nan, nan, nan, nan, nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0]",4917.241,4855.1353,7.5294313,8.564255,46.012737,simplemean,noattack
+Epoch number,Epoch Runtime,Virtual Time Step,"Accuracy (By class), IOU Thresh is 0.3",Loss,Object Loss,Center Loss,Scale Loss,CLS Loss,Aggregation Method,Attack Type
+5,52.44894886016846,2461.0,"[nan, nan, nan, nan, nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0]",4917.241,4855.1353,7.5294313,8.564255,46.012737,simplemean,noattack
+Epoch number,Epoch Runtime,Virtual Time Step,"Accuracy (By class), IOU Thresh is 0.3",Loss,Object Loss,Center Loss,Scale Loss,CLS Loss,Aggregation Method,Attack Type
+5,54.39519810676575,2428.0,"[nan, nan, nan, nan, nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0, 0.0, nan, 0.0]",4917.241,4855.1353,7.5294313,8.564255,46.012737,simplemean,noattack
