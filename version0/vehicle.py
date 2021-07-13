@@ -149,9 +149,11 @@ class Vehicle:
         else:
             rsu = closest_rsu
             rsu.accumulative_gradients.append(self.gradients)
+            print('gradient sent to rsu', rsu)
 
         # RSU checks if enough gradients collected
         if len(rsu.accumulative_gradients) >= cfg['simulation']['maximum_rsu_accumulative_gradients']:
+            print('10 gradients collected')
             rsu.communicate_with_central_server(simulation.central_server)
 
     def compute_and_upload(self, simulation, closest_rsu):

@@ -46,9 +46,9 @@ class RSU:
         elif aggre_method == 'simplemean':
             return nd_aggregation.simple_mean_filter(grad_list, net, f, byz)
 
-    # The RSU updates the model in the central server with its accumulative gradients and downloads the 
-    # latest model from the central server
+
     def communicate_with_central_server(self, central_server):
+        """The RSU updates the model in the central server with its accumulative gradients and downloads the latest model from the central server"""
         # Different methods of attacking
         if cfg['attack'] == 'signflip':
             byz.signflip_attack(self)
@@ -68,7 +68,7 @@ class RSU:
             central_server.update_model()
 
     def decode_gradients(self, central_server):
-        """Decode data sent from vehicle"""
+        """Decode data sent from vehicle (only for efficient communication implementation"""
         start = time.time()
 
         received_gradient_index = len(self.accumulative_gradients) - 1

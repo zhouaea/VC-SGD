@@ -4,7 +4,8 @@ import os
 import psutil
 
 from sumo import SUMO_Dataset
-from central_server import Central_Server, Simulation
+from central_server import Central_Server
+from simulation import Simulation
 from vehicle import Vehicle
 
 import yaml
@@ -72,7 +73,7 @@ def simulate(simulation):
     epoch_runtime_start = time.time()
 
     # Maximum training epochs
-    while simulation.num_epoch <= cfg['neural_network']['epoch']:
+    while simulation.central_server.num_epoch <= cfg['neural_network']['epoch']:
 
         # Clear the vehicle dict after each loop of sumo file
         simulation.vehicle_dict = {}

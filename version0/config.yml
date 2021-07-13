@@ -15,13 +15,16 @@ simulation:
   num_rsu: 5            # number of RSUs
   num_vc: 0 # number of stationary vehicular clouds (0, 2, 4, 6, 8, 10)
   vc_min_vehi: 5 # number of vehicles required to form a vehicular cloud
-  maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate before updating the central server
+  maximum_rsu_accumulative_gradients: 10 # how many gradients does an RSU accumulate from vehicles before uploading to the central server
+  maximum_central_server_accumulative_gradients: 10 # how many gradients does the central server accumulate from vehicles before updating its model?
 
 neural_network:
-  batch_size: 32
-  epoch: 3
+  batch_size: 1
+  warm_up_epochs: 4
+  epoch: 10
   # cifar lr = 0.0005
-  learning_rate: 0.0005
+  # pascalvoc learning rata = 0.001
+  learning_rate: 0.001
 
 seed: 99
 
@@ -45,7 +48,7 @@ communication:
 
 # ********* Statistical Analysis Parameters *********
 # Write runtime statistics in csv files.
-write_runtime_statistics: true
+write_runtime_statistics: false
 # Print CPU and Memory Usage
 write_cpu_and_memory: false
 # Instead of partitioning by classes, partition so that every zone has equal training data for faster performance.
@@ -60,9 +63,10 @@ dataset: 'pascalvoc'
 # percentage of data in each zone that is random (not organized by classes)
 dataset_random_distribution: 0.5
 # 60000 for mnist, 16551 for pascalvoc
-num_training_data: 2000 # minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
-num_val_train_data: 2000
-num_test_data: 4952
+# minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
+num_training_data: 40
+num_val_train_data: 10
+num_test_data: 10
 
 
 aggregation_method: 'simplemean' # simplemean, cgc
