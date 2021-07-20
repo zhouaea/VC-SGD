@@ -21,12 +21,7 @@ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3.9 get-pip.py
 
 # Install dependencies
-python3.9 -m pip install --ignore-installed -r requirements.txt
-
-# Optimize cpu performance
-export KMP_AFFINITY=granularity=fine,compact,1,0
-export vCPUs=`cat /proc/cpuinfo | grep processor | wc -l`
-export OMP_NUM_THREADS=$((vCPUs / 2))
+sudo python3.9 -m pip install -t /usr/local/cuda-11.2/python_packages --cache-dir=/usr/local/cuda-11.2/tmp -r requirements.txt
 
 # Install pascalvoc dataset in VC-SGD/data/pascalvoc
 python3.9 download_pascal_voc.py
