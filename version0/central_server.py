@@ -100,6 +100,6 @@ class Central_Server:
 
             if cfg['dataset'] == 'pascalvoc':
                 # Update targets when updating model.
-                self.fake_x = mx.nd.zeros((batch_size, 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']))
+                self.fake_x = mx.nd.zeros((batch_size, 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']), ctx=self.ctx)
                 with autograd.train_mode():
                     _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.net(self.fake_x)

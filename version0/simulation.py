@@ -47,7 +47,7 @@ class Simulation:
 
         if cfg['dataset'] == 'pascalvoc':
             self.fake_x = mx.nd.zeros(
-                (batch_size, 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']))
+                (batch_size, 3, cfg['pascalvoc_metrics']['height'], cfg['pascalvoc_metrics']['width']), ctx=self.central_server.ctx)
             with autograd.train_mode():
                 _, self.anchors, self.offsets, self.feat_maps, _, _, _, _ = self.central_server.net(self.fake_x)
             self.target_generator = YOLOV3PrefetchTargetGenerator(
