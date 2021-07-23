@@ -86,13 +86,13 @@ class Vehicle:
             X = self.training_data.pop()
             y = self.training_label.pop()
         else:
-            X = args[0]
+            X = nd.array(args[0], ctx=simulation.central_server.ctx)
             y = args[1]
 
         with autograd.record():
             if cfg['dataset'] == 'pascalvoc':
-                gt_bboxes = y[:, :, :4]
-                gt_ids = y[:, :, 4:5]
+                gt_bboxes = nd.array(y[:, :, :4], ctx=simulation.central_server.ctx)
+                gt_ids = nd.array(y[:, :, 4:5], ctx=simulation.central_server.ctx)
 
                 start_targets = time.time()
 

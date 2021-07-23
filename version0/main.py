@@ -165,7 +165,7 @@ def main():
     opt = parse_args()
 
     num_gpus = opt.num_gpus
-    context = mx.gpu(0);
+    context = mx.gpu(0)
 
     num_round = opt.num_round
 
