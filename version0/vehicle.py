@@ -7,17 +7,13 @@ import psutil
 import gc
 
 from neural_network import Neural_Network
-import random
 import numpy as np
 import yaml
 import heapq
 from sklearn.utils import shuffle
 from shapely.geometry import Point
-from memory_profiler import profile
 
-import mxnet as mx
-from mxnet import nd, autograd, gluon
-from memory_profiler import profile
+from mxnet import nd, autograd
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)

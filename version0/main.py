@@ -21,7 +21,6 @@ import numpy as np
 
 import time, random, argparse, itertools
 import pickle
-from memory_profiler import profile
 import sys
 
 
@@ -64,7 +63,6 @@ def extract_batch_from_polygon(simulation, polygon_index):
     return training_data_assigned, training_label_assigned
 
 
-@profile
 def simulate(simulation):
     tree = ET.parse(simulation.FCD_file)
     root = tree.getroot()
@@ -167,7 +165,7 @@ def main():
     opt = parse_args()
 
     num_gpus = opt.num_gpus
-    context = [mx.gpu(i) for i in range(num_gpus)] if num_gpus > 0 else [mx.cpu()]
+    context = mx.gpu(0);
 
     num_round = opt.num_round
 
