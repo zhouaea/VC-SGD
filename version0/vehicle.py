@@ -94,13 +94,15 @@ class Vehicle:
                 gt_bboxes = nd.array(y[:, :, :4], ctx=simulation.central_server.ctx)
                 gt_ids = nd.array(y[:, :, 4:5], ctx=simulation.central_server.ctx)
 
-                start_targets = time.time()
+                start_target = time.time()
 
                 objectness, center_targets, scale_targets, weights, class_targets = simulation.target_generator(
                     simulation.fake_x, simulation.feat_maps, simulation.anchors, simulation.offsets,
                     gt_bboxes, gt_ids, None)
 
-                end_targets = time.time()
+                end_target = time.time()
+
+                start_forward = time.time()
 
                 # Calculate loss by using network in training mode and supplying extra target parameters.
                 with autograd.train_mode():
@@ -108,13 +110,18 @@ class Vehicle:
                                                                            center_targets, scale_targets,
                                                                            weights, class_targets)
                 loss = obj_loss + center_loss + scale_loss + cls_loss
+
+                end_forward = time.time()
             else:
                 output = self.net(X)
                 if cfg['attack'] == 'label' and len(closest_rsu.accumulative_gradients) < cfg['num_faulty_grads']:
                     loss = neural_net.loss(output, 9 - y)
                 else:
                     loss = neural_net.loss(output, y)
+
+        start_backward = time.time()
         loss.backward()
+        end_backward = time.time()
         grad_collect = []
         for param in self.net.collect_params().values():
             if param.grad_req != 'null':
@@ -122,7 +129,10 @@ class Vehicle:
 
         self.gradients = grad_collect
         end = time.time()
-        print('time to compute gradients', end - start)
+        print('total time to compute gradients', end - start)
+        print('time to compute targets', end_target - start_target)
+        print('time to compute forward', end_forward - start_forward)
+        print('time to compute backward', end_backward - start_backward)
         with open(os.path.join('collected_results', 'time_to_compute_gradients'), mode='a') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([end - start])

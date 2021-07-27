@@ -140,6 +140,7 @@ else:
 
 
 def data_for_polygon(polygons):
+    start = time.time()
     """
         Returns training data and labels for new epochs.
     """
@@ -300,4 +301,6 @@ def data_for_polygon(polygons):
                 image_data_bypolygon.append(X_new.tolist())
                 label_data_bypolygon.append(y_new.tolist())
 
+    end = time.time()
+    print("data partitioning took ", start - end, "seconds")
     return image_data_bypolygon, label_data_bypolygon
