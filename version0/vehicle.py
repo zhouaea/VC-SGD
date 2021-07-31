@@ -106,9 +106,9 @@ class Vehicle:
 
                 # Calculate loss by using network in training mode and supplying extra target parameters.
                 with autograd.train_mode():
-                    obj_loss, center_loss, scale_loss, cls_loss = self.net(X, gt_bboxes, objectness,
-                                                                           center_targets, scale_targets,
-                                                                           weights, class_targets)
+                    obj_loss, center_loss, scale_loss, cls_loss = self.net(X, gt_bboxes, objectness[0],
+                                                                           center_targets[0], scale_targets[0],
+                                                                           weights[0], class_targets[0])
                 loss = obj_loss + center_loss + scale_loss + cls_loss
 
                 end_forward = time.time()
