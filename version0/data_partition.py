@@ -302,5 +302,5 @@ def data_for_polygon(polygons):
                 label_data_bypolygon.append(y_new.tolist())
 
     end = time.time()
-    print("data partitioning took ", start - end, "seconds")
+    print("data partitioning took ", end - start, "seconds")
     return image_data_bypolygon, label_data_bypolygon
