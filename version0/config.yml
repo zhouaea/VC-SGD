@@ -52,6 +52,8 @@ write_runtime_statistics: false
 write_cpu_and_memory: false
 # Instead of partitioning by classes, partition so that every zone has equal training data for faster performance.
 even_distribution: false
+# Only train and test on one set of classes
+filter_to_one_class: true
 
 
 
@@ -63,8 +65,8 @@ dataset: 'pascalvoc'
 dataset_random_distribution: 0.5
 # 60000 for mnist, 16551 for pascalvoc
 # minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
-num_training_data: 2000
-num_val_train_data: 2000
+num_training_data: 16551
+num_val_train_data: 16551
 num_test_data: 4952 # 4952 for pascalvoc
 
 

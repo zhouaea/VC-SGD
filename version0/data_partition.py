@@ -39,6 +39,40 @@ def transform(data, label):
 
     return data, label
 
+def filter_to_one_class(dataset, class_index):
+    """Given a dataset and a class number, return a new dataset that only has image/label pairs with objects of that class number"""
+    is_first_datum = True
+
+    new_X = None
+    new_y = None
+
+    # Iterate through each image/label pair in the dataset.
+    for (X, y) in dataset:
+        # Iterate through each individual object in the label.
+        for n in y:
+            if n[4] == class_index:
+                # Make sure the first element in our new_X and new_Y are the same shape as the rest of the elements so we can concatenate them.
+                if is_first_datum:
+                    new_X = nd.expand_dims(X, axis=0)
+                    new_y = np.expand_dims(y, axis=0)
+                    is_first_datum = False
+                else:
+                    # Add an extra dimension to the image or label data so we can concatenate by batch
+                    new_X = nd.concat(new_X, nd.expand_dims(X, axis=0), num_args=2, dim=0)
+                    new_y = np.concatenate((new_y, np.expand_dims(y, axis=0)), axis=0)
+                # It is possible that there are multiple objects of the same class. No need to add the image/label pair again.
+                break
+
+            # No more objects in data.
+            if n[4] == -1:
+                break
+
+    if new_X == None:
+        print("No such class exists in this dataset")
+        exit()
+
+    return mx.gluon.data.dataset.ArrayDataset(new_X, new_y)
+
 
 start = time.time()
 # Load Data
@@ -73,15 +107,22 @@ elif cfg['dataset'] == 'pascalvoc':
     #   - The dataloader should have batches of 1/4 the full dataset.
     #   - X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
     #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
-    print('loading training dataset...')
+    print('loading training and testing datasets...')
     train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                  transform=transform)
 
-    val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
-                                     transform=transform)
-
     # and use 2007 test as validation data
     val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+
+    if cfg["filter_to_one_class"]:
+        print("filtering training and testing datasets")
+        # filter for data with airplanes only.
+        train_dataset = filter_to_one_class(train_dataset, 0)
+        val_test_dataset = filter_to_one_class(val_test_dataset, 0)
+        print(len(train_dataset))
+        print(len(val_test_dataset))
+        exit()
+
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
@@ -94,7 +135,7 @@ elif cfg['dataset'] == 'pascalvoc':
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
-    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']),
+    val_train_data = mx.gluon.data.DataLoader(train_dataset.take(cfg['num_val_train_data']),
                                               BATCH_SIZE,
                                               shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
@@ -105,7 +146,6 @@ elif cfg['dataset'] == 'pascalvoc':
 
     # Clean up unused datasets
     del train_dataset
-    del val_train_dataset
     del val_test_dataset
     del batchify_fn
     gc.collect()
@@ -167,7 +207,6 @@ def data_for_polygon(polygons):
                 image_data_bypolygon[current_polygon].append(X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                 label_data_bypolygon[current_polygon].append(y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
                 lists_in_polygon += 1
-
     else:
         if cfg['dataset'] == 'pascalvoc':
             image_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
@@ -180,7 +219,7 @@ def data_for_polygon(polygons):
             lists_in_polygon = 0
             current_polygon = 0
 
-            # Out of the 4 batches of total training data, how many batches are randomized?
+            # Out of the 4 quarters of total training data, how many are sent directly to polygons and how many are filtered into classes?
             if cfg['dataset_random_distribution'] == 0.5:
                 random_data_proportion_index = 2
             elif cfg['dataset_random_distribution'] == 0.25:
@@ -189,8 +228,9 @@ def data_for_polygon(polygons):
                 print("ERROR: Please select either 0.5 or 0.25 for dataset_random_distribution in config.yml")
                 exit()
 
+            # Load the training data in quarters. (Each batch of training data is a quarter of the full dataset)
             for i, (X_quarter, y_quarter) in enumerate(train_data):
-                # Assign half of data ("random data") to polygons (two lists per polygon)
+                # Assign one quarter or two quarters of total data ("random data, since the dataloader is shuffled") to polygons (two lists per polygon)
                 if i < random_data_proportion_index:
                     one_tenth_index = int(len(X_quarter) / NUM_POLYGONS) + (
                                 len(X_quarter) % NUM_POLYGONS > 0)  # round up if there is a decimal
@@ -219,22 +259,18 @@ def data_for_polygon(polygons):
                         # Each pascal voc label is an n x 6 ndarray. There are n objects in each datum and the 5th column
                         # has the class index for each object.
                         potential_class_indices = []
-                        # Store all class indices found in the training data.
+                        # Store all class indices found in the single training datum.
                         for k in range(len(y_quarter[j])):
                             # If there are no more valid objects go to the next image label.
                             if y_quarter[j][k][4] == -1:
                                 break
                             potential_class_indices.append(int(y_quarter[j][k][4].asscalar()))
-                        # Access the list cell corresponding to a random class index found in the training data.
-                        random_class_index = np.random.randint(len(potential_class_indices))
 
                         # Add the datum to a randomly chosen object class that it contains.
-                        # Note: We must add an extra dimension to each datum so we concatenate by batch later.
+                        random_class_index = np.random.randint(len(potential_class_indices))
+                        # Note: We must add an extra dimension to each datum so we can concatenate by batch later.
                         image_data_byclass[potential_class_indices[random_class_index]].append(nd.expand_dims(X_quarter[j], axis=0))
                         label_data_byclass[potential_class_indices[random_class_index]].append(nd.expand_dims(y_quarter[j], axis=0))
-
-            # Measure performance of partitioning data into classes
-            end = time.time()
 
             # Print statistics on amount of data in each class.
             if cfg['dataset'] == 'pascalvoc':
@@ -262,7 +298,6 @@ def data_for_polygon(polygons):
 
             # Combine lists in each polygon into one giant list and shuffle each polygon list.
             for pi in range(len(polygons)):
-                # Combine.
                 temp_image_data_forpolygon = nd.concat(*image_data_bypolygon[pi], num_args=len(image_data_bypolygon[pi]), dim=0)
                 temp_label_data_forpolygon = nd.concat(*label_data_bypolygon[pi], num_args=len(label_data_bypolygon[pi]), dim=0)
 
@@ -287,6 +322,7 @@ def data_for_polygon(polygons):
             gc.collect()
 
         else:
+            # Data partitioning for image classification.
             random_len = len(X_first_half) // len(polygons) + 1
 
             for i in range(len(polygons)):
