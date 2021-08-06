@@ -20,7 +20,7 @@ simulation:
 
 neural_network:
   batch_size: 16
-  epoch: 2
+  epoch: 100
   # cifar lr = 0.0005
   # pascalvoc learning rata = 0.001
   learning_rate: 0.001

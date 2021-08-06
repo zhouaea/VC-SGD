@@ -43,8 +43,8 @@ def filter_to_one_class(dataset, class_index):
     """Given a dataset and a class number, return a new dataset that only has image/label pairs with objects of that class number"""
     is_first_datum = True
 
-    new_X = None
-    new_y = None
+    new_X = 0
+    new_y = 0
 
     # Iterate through each image/label pair in the dataset.
     for (X, y) in dataset:
@@ -67,7 +67,7 @@ def filter_to_one_class(dataset, class_index):
             if n[4] == -1:
                 break
 
-    if new_X == None:
+    if is_first_datum == True:
         print("No such class exists in this dataset")
         exit()
 
