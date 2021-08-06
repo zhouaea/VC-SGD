@@ -119,9 +119,6 @@ elif cfg['dataset'] == 'pascalvoc':
         # filter for data with airplanes only.
         train_dataset = filter_to_one_class(train_dataset, 0)
         val_test_dataset = filter_to_one_class(val_test_dataset, 0)
-        print(len(train_dataset))
-        print(len(val_test_dataset))
-        exit()
 
 
     # behavior of batchify_fn: stack images, and pad labels

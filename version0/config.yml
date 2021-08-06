@@ -51,7 +51,7 @@ write_runtime_statistics: false
 # Print CPU and Memory Usage
 write_cpu_and_memory: false
 # Instead of partitioning by classes, partition so that every zone has equal training data for faster performance.
-even_distribution: false
+even_distribution: true
 # Only train and test on one set of classes
 filter_to_one_class: true
 
