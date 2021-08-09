@@ -72,12 +72,15 @@ class Simulation:
         start_for_all_data = time.time()
         for (data, label) in self.val_test_data:
             if cfg['dataset'] == 'pascalvoc':
+                # Load neural network inputs into gpu memory, if using a gpu.
+                data = nd.array(data, ctx=self.central_server.ctx)
+                gt_bboxes = nd.array(label[:, :, 4:5], ctx=self.central_server.ctx)
+                gt_class_indices = nd.array(label[:, :, 4:5], ctx=self.central_server.ctx)
+
                 outputs = self.central_server.net(data)
                 pred_object_class_indices = outputs[:][0]
                 pred_object_probabilities = outputs[:][1]
                 pred_bboxes = outputs[:][2]
-                gt_bboxes = label[:, :, 0:4]
-                gt_class_indices = label[:, :, 4:5]
                 self.epoch_accuracy.update(pred_bboxes, pred_object_class_indices, pred_object_probabilities, gt_bboxes,
                                            gt_class_indices)
             else:
@@ -92,9 +95,10 @@ class Simulation:
         # cross entropy on training data
         for data, label in self.val_train_data:
             if cfg['dataset'] == 'pascalvoc':
-                # Acquire all variables required to calculate loss.
-                gt_bboxes = mx.nd.array(label[:, :, :4]).astype(np.float32)
-                gt_ids = label[:, :, 4:5]
+                # Load neural network inputs into gpu memory, if using a gpu.
+                data = nd.array(data, ctx=self.central_server.ctx)
+                gt_bboxes = mx.nd.array(label[:, :, :4], ctx=self.central_server.ctx)
+                gt_ids = mx.nd.array(label[:, :, 4:5], ctx=self.central_server.ctx)
 
                 objectness, center_targets, scale_targets, weights, class_targets = self.target_generator(
                     self.fake_x, self.feat_maps, self.anchors, self.offsets,
