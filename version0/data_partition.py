@@ -8,12 +8,10 @@ import time
 import numpy as np
 import mxnet as mx
 from mxnet.image import imresize as data_resize, nd
-from mxnet.gluon.data.vision import transforms
-from gluoncv.data import transforms as gcv_transforms
-from gluoncv import data, utils
 from gluoncv.data.transforms.bbox import resize as label_bbox_resize
 from gluoncv.data.batchify import Tuple, Stack, Pad
 from gluoncv.data import VOCDetection
+from mxnet.gluon.data import FilterSampler
 from collections import defaultdict
 import copy
 import gc
@@ -39,39 +37,20 @@ def transform(data, label):
 
     return data, label
 
-def filter_to_one_class(dataset, class_index):
+def filter_to_one_class(sample):
+    class_index = 0 # airplane
     """Given a dataset and a class number, return a new dataset that only has image/label pairs with objects of that class number"""
-    is_first_datum = True
+    # Iterate through each individual object in the label.
+    _, sample_y = sample
+    for n in sample_y:
+        if n[4] == class_index:
+            return True
 
-    new_X = 0
-    new_y = 0
+        # No more objects in data.
+        if n[4] == -1:
+            break
 
-    # Iterate through each image/label pair in the dataset.
-    for (X, y) in dataset:
-        # Iterate through each individual object in the label.
-        for n in y:
-            if n[4] == class_index:
-                # Make sure the first element in our new_X and new_Y are the same shape as the rest of the elements so we can concatenate them.
-                if is_first_datum:
-                    new_X = nd.expand_dims(X, axis=0)
-                    new_y = np.expand_dims(y, axis=0)
-                    is_first_datum = False
-                else:
-                    # Add an extra dimension to the image or label data so we can concatenate by batch
-                    new_X = nd.concat(new_X, nd.expand_dims(X, axis=0), num_args=2, dim=0)
-                    new_y = np.concatenate((new_y, np.expand_dims(y, axis=0)), axis=0)
-                # It is possible that there are multiple objects of the same class. No need to add the image/label pair again.
-                break
-
-            # No more objects in data.
-            if n[4] == -1:
-                break
-
-    if is_first_datum == True:
-        print("No such class exists in this dataset")
-        exit()
-
-    return mx.gluon.data.dataset.ArrayDataset(new_X, new_y)
+    return False
 
 
 start = time.time()
@@ -102,24 +81,29 @@ elif cfg['dataset'] == 'mnist':
 elif cfg['dataset'] == 'pascalvoc':
     # Typically we use 2007+2012 trainval splits for training data.
     # NOTES: 
-    #   - Originally the training and label data are numpy ndarrays but are converted to mxnet ndarrays
-    #   when they are passed into the dataloader.
+    #   - Originally the training data is an mxnet ndarray and the label data is a numpy ndarray but is converted to mxnet ndarrays
+    #   when it is passed into the dataloader.
     #   - The dataloader should have batches of 1/4 the full dataset.
     #   - X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
     #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     print('loading training and testing datasets...')
-    train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
-                                 transform=transform)
+    if filter_to_one_class:
+        train_dataset = FilterSampler(filter_to_one_class, VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+                                     transform=transform))
 
-    # and use 2007 test as validation data
-    val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+        # and use 2007 test as validation data
+        val_test_dataset = FilterSampler(filter_to_one_class, VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform))
 
-    if cfg["filter_to_one_class"]:
-        print("filtering training and testing datasets")
-        # filter for data with airplanes only.
-        train_dataset = filter_to_one_class(train_dataset, 0)
-        val_test_dataset = filter_to_one_class(val_test_dataset, 0)
+        print(type(train_dataset))
+        print(len(train_dataset))
+        print(type(val_test_dataset))
+        print(len(val_test_dataset))
+    else:
+        train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+                                     transform=transform)
 
+        # and use 2007 test as validation data
+        val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
