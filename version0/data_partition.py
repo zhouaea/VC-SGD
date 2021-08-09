@@ -91,7 +91,11 @@ elif cfg['dataset'] == 'pascalvoc':
         val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')]).filter(filter_to_one_class).transform(transform)
 
         print(type(train_dataset))
+        print(len(train_dataset))
+        print(type(val_train_dataset))
+        print(len(val_train_dataset))
         print(type(val_test_dataset))
+        print(len(val_test_dataset))
     else:
         train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                      transform=transform)
@@ -100,8 +104,13 @@ elif cfg['dataset'] == 'pascalvoc':
 
         # and use 2007 test as validation data
         val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+
         print(type(train_dataset))
+        print(len(train_dataset))
+        print(type(val_train_dataset))
+        print(len(val_train_dataset))
         print(type(val_test_dataset))
+        print(len(val_test_dataset))
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
@@ -112,16 +121,16 @@ elif cfg['dataset'] == 'pascalvoc':
     print('loading dataloader...')
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
-                                          batchify_fn=batchify_fn, last_batch='keep')
+                                          batchify_fn=batchify_fn, last_batch='keep', num_workers=20)
 
     val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']),
                                               BATCH_SIZE,
                                               shuffle=False,
-                                              batchify_fn=batchify_fn, last_batch='keep')
+                                              batchify_fn=batchify_fn, last_batch='keep', num_workers=20)
     val_test_data = mx.gluon.data.DataLoader(val_test_dataset.take(cfg['num_test_data']),
                                              BATCH_SIZE,
                                              shuffle=False,
-                                             batchify_fn=batchify_fn, last_batch='keep')
+                                             batchify_fn=batchify_fn, last_batch='keep', num_workers=20)
 
     # Clean up unused datasets
     del train_dataset
