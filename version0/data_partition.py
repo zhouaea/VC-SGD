@@ -1,8 +1,5 @@
-import csv
-import os
 import random
 
-import psutil
 import yaml
 import time
 import numpy as np
@@ -11,12 +8,10 @@ from mxnet.image import imresize as data_resize, nd
 from gluoncv.data.transforms.bbox import resize as label_bbox_resize
 from gluoncv.data.batchify import Tuple, Stack, Pad
 from gluoncv.data import VOCDetection
-from mxnet.gluon.data import FilterSampler
 from collections import defaultdict
 import copy
 import gc
 from sklearn.utils import shuffle
-from memory_profiler import profile
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -90,6 +85,8 @@ elif cfg['dataset'] == 'pascalvoc':
     if cfg['filter_to_one_class']:
         train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')]).filter(filter_to_one_class).transform(transform)
 
+        val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')]).filter(filter_to_one_class).transform(transform)
+
         # and use 2007 test as validation data
         val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')]).filter(filter_to_one_class).transform(transform)
 
@@ -98,6 +95,8 @@ elif cfg['dataset'] == 'pascalvoc':
     else:
         train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                      transform=transform)
+
+        val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')], transform=transform)
 
         # and use 2007 test as validation data
         val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
@@ -116,7 +115,7 @@ elif cfg['dataset'] == 'pascalvoc':
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep')
 
-    val_train_data = mx.gluon.data.DataLoader(train_dataset.take(cfg['num_val_train_data']),
+    val_train_data = mx.gluon.data.DataLoader(val_train_dataset.take(cfg['num_val_train_data']),
                                               BATCH_SIZE,
                                               shuffle=False,
                                               batchify_fn=batchify_fn, last_batch='keep')
