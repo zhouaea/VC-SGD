@@ -88,11 +88,11 @@ elif cfg['dataset'] == 'pascalvoc':
     #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     print('loading training and testing datasets...')
     if filter_to_one_class:
-        train_dataset = FilterSampler(filter_to_one_class, VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
-                                     transform=transform))
+        train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
+                                     transform=transform).filter(filter_to_one_class)
 
         # and use 2007 test as validation data
-        val_test_dataset = FilterSampler(filter_to_one_class, VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform))
+        val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform).filter(filter_to_one_class)
 
         print(type(train_dataset))
         print(len(train_dataset))
