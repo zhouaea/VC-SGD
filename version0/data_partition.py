@@ -47,8 +47,6 @@ def filter_to_one_class(sample):
 
     return False
 
-
-start = time.time()
 # Load Data
 BATCH_SIZE = cfg['neural_network']['batch_size']
 NUM_TRAINING_DATA = cfg['num_training_data']
@@ -119,6 +117,7 @@ elif cfg['dataset'] == 'pascalvoc':
     # Note: See https://cv.gluon.ai/build/examples_detection/train_yolo_v3.html for explanation on batchify.
 
     print('loading dataloader...')
+    start = time.time()
     train_data = mx.gluon.data.DataLoader(train_dataset.take(NUM_TRAINING_DATA), int(NUM_TRAINING_DATA / 4) + (NUM_TRAINING_DATA % 4 > 0), # round up if there is a decimal
                                           shuffle=True,
                                           batchify_fn=batchify_fn, last_batch='keep', num_workers=20)
@@ -131,6 +130,9 @@ elif cfg['dataset'] == 'pascalvoc':
                                              BATCH_SIZE,
                                              shuffle=False,
                                              batchify_fn=batchify_fn, last_batch='keep', num_workers=20)
+    end = time.time()
+    # After switching from pascalvoc_dataset objects to lazy_transform_dataset objects, data loading takes longer with less of a bottleneck for target generation.
+    print("time to initialize dataloaders:", end - start)
 
     # Clean up unused datasets
     del train_dataset
