@@ -24,7 +24,7 @@ def transform(data, label):
         label = label_bbox_resize(label, in_size=(w, h),
                                   out_size=(cfg['pascalvoc_metrics']['width'], cfg['pascalvoc_metrics']['height']))
         label = label.astype(np.float32)
-        # Pad to 56 objects, better to do it here than to pad with an ndarray according to the documentation.
+        # Pad to 56 objects, better to do it here than to pad with an mxnet ndarray according to the documentation.
         label = np.pad(label, ((0, 56 - len(label)), (0, 0)), 'constant', constant_values=-1)
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
         data = mx.nd.transpose(data, (2, 0, 1))
@@ -102,7 +102,6 @@ elif cfg['dataset'] == 'pascalvoc':
         val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
         print(type(train_dataset))
         print(type(val_test_dataset))
-        exit()
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
@@ -156,7 +155,8 @@ else:
         # For every image in the second half of the dataset, add it to a list in the dictionary key that corresponds with
         # its class index.
         for j in range(len(X_second_half)):
-            train_data_byclass[y_second_half[j]].append(X_second_half[j])
+            train_data_byclass[
+                y_second_half[j]].append(X_second_half[j])
 
 
 def data_for_polygon(polygons):
@@ -184,9 +184,17 @@ def data_for_polygon(polygons):
                 if lists_in_polygon == 4:
                     lists_in_polygon = 0
                     current_polygon += 1
-                image_data_bypolygon[current_polygon].append(X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
-                label_data_bypolygon[current_polygon].append(y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index])
+
+                # We can't concatenate an empty array with an ndarray, so for the first list added to the polygon bucket, just assign it.
+                if lists_in_polygon == 0:
+                    image_data_bypolygon[current_polygon] = X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index]
+                    label_data_bypolygon[current_polygon] = y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index]
+                else:
+                    image_data_bypolygon[current_polygon] = nd.concat(image_data_bypolygon[current_polygon], X_quarter[j * one_tenth_index:(j + 1) * one_tenth_index], num_args=2, dim=0)
+                    label_data_bypolygon[current_polygon] = nd.concat(label_data_bypolygon[current_polygon], y_quarter[j * one_tenth_index:(j + 1) * one_tenth_index], num_args=2, dim=0)
+
                 lists_in_polygon += 1
+
     else:
         if cfg['dataset'] == 'pascalvoc':
             image_data_bypolygon = [[] for i in range(NUM_POLYGONS)]
