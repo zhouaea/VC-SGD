@@ -74,7 +74,7 @@ class Simulation:
             if cfg['dataset'] == 'pascalvoc':
                 # Load neural network inputs into gpu memory, if using a gpu.
                 data = nd.array(data, ctx=self.central_server.ctx)
-                gt_bboxes = nd.array(label[:, :, 4:5], ctx=self.central_server.ctx)
+                gt_bboxes = nd.array(label[:, :, 0:4], ctx=self.central_server.ctx)
                 gt_class_indices = nd.array(label[:, :, 4:5], ctx=self.central_server.ctx)
 
                 outputs = self.central_server.net(data)
