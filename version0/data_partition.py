@@ -88,22 +88,22 @@ elif cfg['dataset'] == 'pascalvoc':
     #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     print('loading training and testing datasets...')
     if filter_to_one_class:
-        train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
-                                     transform=transform).filter(filter_to_one_class)
+        train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')]).filter(filter_to_one_class).transform(transform)
 
         # and use 2007 test as validation data
-        val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform).filter(filter_to_one_class)
+        val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')]).filter(filter_to_one_class).transform(transform)
 
         print(type(train_dataset))
-        print(len(train_dataset))
         print(type(val_test_dataset))
-        print(len(val_test_dataset))
     else:
         train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')],
                                      transform=transform)
 
         # and use 2007 test as validation data
         val_test_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'test')], transform=transform)
+        print(type(train_dataset))
+        print(type(val_test_dataset))
+        exit()
 
     # behavior of batchify_fn: stack images, and pad labels
     batchify_fn = Tuple(Stack(), Pad(pad_val=-1))
