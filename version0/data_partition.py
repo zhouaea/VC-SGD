@@ -87,7 +87,7 @@ elif cfg['dataset'] == 'pascalvoc':
     #   - X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
     #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     print('loading training and testing datasets...')
-    if filter_to_one_class:
+    if cfg['filter_to_one_class']:
         train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')]).filter(filter_to_one_class).transform(transform)
 
         # and use 2007 test as validation data
