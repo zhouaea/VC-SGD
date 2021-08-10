@@ -15,6 +15,8 @@ from sklearn.utils import shuffle
 
 file = open('config.yml', 'r')
 cfg = yaml.load(file, Loader=yaml.FullLoader)
+FILTER_TO_ONE_CLASS = cfg['filter']['filter_to_one_class']
+SELECTED_CLASS_INDEX = cfg['filter']['class_index']
 
 
 def transform(data, label):
@@ -24,6 +26,25 @@ def transform(data, label):
         label = label_bbox_resize(label, in_size=(w, h),
                                   out_size=(cfg['pascalvoc_metrics']['width'], cfg['pascalvoc_metrics']['height']))
         label = label.astype(np.float32)
+
+        if FILTER_TO_ONE_CLASS:
+            selected_class_object_rows = []
+
+            # If an object in the label is of the desired class, store it in a list.
+            for object_row in label:
+                if object_row[4] == SELECTED_CLASS_INDEX:
+                    selected_class_object_rows.append(object_row)
+
+            # Replace label rows only with rows that are for a specific object class.
+            labelRowIndex = 0;
+            for object_row in selected_class_object_rows:
+                label[labelRowIndex] = object_row
+                labelRowIndex += 1
+
+            # Delete all other rows.
+            while labelRowIndex < len(label):
+                mx.np.delete(label, labelRowIndex, 0)
+
         # Pad to 56 objects, better to do it here than to pad with an mxnet ndarray according to the documentation.
         label = np.pad(label, ((0, 56 - len(label)), (0, 0)), 'constant', constant_values=-1)
     if cfg['dataset'] == 'cifar10' or cfg['dataset'] == 'pascalvoc':
@@ -33,15 +54,14 @@ def transform(data, label):
     return data, label
 
 def filter_to_one_class(sample):
-    class_index = 0 # airplane
     """Given a dataset and a class number, return a new dataset that only has image/label pairs with objects of that class number"""
     # Iterate through each individual object in the label.
     _, sample_y = sample
     for n in sample_y:
-        if n[4] == class_index:
+        if n[4] == SELECTED_CLASS_INDEX:
             return True
 
-        # No more objects in data.
+        # No more objects in label.
         if n[4] == -1:
             break
 
@@ -80,7 +100,7 @@ elif cfg['dataset'] == 'pascalvoc':
     #   - X has a shape of (batch size, 3, 320, 320) and is an mxnet ndarray.
     #   - y has a shape of (batch size, objects in image, 6) and is an mxnet ndarray.
     print('loading training and testing datasets...')
-    if cfg['filter_to_one_class']:
+    if FILTER_TO_ONE_CLASS:
         train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')]).filter(filter_to_one_class).transform(transform)
 
         val_train_dataset = VOCDetection(root='../data/pascalvoc', splits=[(2007, 'trainval'), (2012, 'trainval')]).filter(filter_to_one_class).transform(transform)

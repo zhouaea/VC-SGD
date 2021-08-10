@@ -19,7 +19,7 @@ simulation:
   maximum_central_server_accumulative_gradients: 10 # how many gradients does the central server accumulate from RSU/vehicular clouds before updating its model?
 
 neural_network:
-  batch_size: 16
+  batch_size: 1
   epoch: 100
   # cifar lr = 0.0005
   # pascalvoc learning rata = 0.001
@@ -52,8 +52,11 @@ write_runtime_statistics: false
 write_cpu_and_memory: false
 # Instead of partitioning by classes, partition so that every zone has equal training data for faster performance.
 even_distribution: true
-# Only train and test on one set of classes
-filter_to_one_class: true
+
+filter:
+  # Only train and test on one set of classes
+  filter_to_one_class: false
+  class_index: 0
 
 
 
@@ -65,9 +68,9 @@ dataset: 'pascalvoc'
 dataset_random_distribution: 0.5
 # 60000 for mnist, 16551 for pascalvoc
 # minimum training data size for pascalvoc is 40, since we load in quarters and divide by 10
-num_training_data: 16551
-num_val_train_data: 16551
-num_test_data: 4952 # 4952 for pascalvoc
+num_training_data: 40
+num_val_train_data: 40
+num_test_data: 40 # 4952 for pascalvoc
 
 
 aggregation_method: 'simplemean' # simplemean, cgc
