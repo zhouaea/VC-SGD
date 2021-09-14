@@ -15,6 +15,3 @@ python3 -m pip install -r requirements.txt
 python3 download_pascal_voc.py
 rm ../../data/pascalvoc/*.tar
 cd ..
-
-# Download application that will continue to run experiments even if the ssh connection breaks.
-apt-get install screen
