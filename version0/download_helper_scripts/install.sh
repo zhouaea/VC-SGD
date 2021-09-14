@@ -9,7 +9,7 @@
 # Make sure this is run in the download_helper_scripts directory.
 
 # Install dependencies
-python3 -m pip install requirements.txt
+python3 -m pip install -r requirements.txt
 
 # Install pascalvoc dataset in VC-SGD/data/pascalvoc
 python3 download_pascal_voc.py
